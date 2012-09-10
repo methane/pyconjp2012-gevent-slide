@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2010 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Original slides: Marcin Wichary (mwichary@google.com)
+  Modifications: Ernest Delgado (ernestd@google.com)
+                 Alex Russell (slightlyoff@chromium.org)
+
+  html5-slides-markdown Modifications: Adam Zapletal (adamzap@gmail.com)
+-->
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>gevent</title>
+    <style type = "text/css">
+        body {
+          background: #778;
+          padding: 0;
+          margin: 0;
+          overflow: hidden;
+        }
+
+        div.presentation {
+          position: absolute;
+          width: 100%;
+          display: table-cell;
+          vertical-align: middle;
+          height: 100%;
+          background: inherit;
+        }
+
+        div.slides {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          left: 0;
+          top: 0;
+          position: absolute;
+          display: block;
+          -webkit-transition: -webkit-transform 1s ease-in-out;
+          -moz-transition: -moz-transform 1s ease-in-out;
+          -o-transition: -o-transform 1s ease-in-out;
+        }
+
+        div.slide {
+          display: none;
+          position: absolute;
+          overflow: hidden;
+          width: 900px;
+          height: 700px;
+          left: 50%;
+          top: 50%;
+          margin-top: -350px;
+          background: -webkit-gradient(linear, left bottom, left top, from(#bbd), to(#fff));
+          -webkit-transition: margin 0.25s ease-in-out;
+          background-color: #eee;
+          background: -moz-linear-gradient(bottom, #bbd, #fff);
+          -moz-transition: margin 0.25s ease-in-out;
+          -o-transition: margin 0.25s ease-in-out;
+          border-top-left-radius: 20px;
+          -moz-border-radius-topleft: 20px;
+          -webkit-border-top-left-radius: 20px;
+          border-top-right-radius: 20px;
+          -moz-border-radius-topright: 20px;
+          -webkit-border-top-right-radius: 20px;
+          border-bottom-right-radius: 20px;
+          -moz-border-radius-bottomright: 20px;
+          -webkit-border-bottom-right-radius: 20px;
+          border-bottom-left-radius: 20px;
+          -moz-border-radius-bottomleft: 20px;
+          -webkit-border-bottom-left-radius: 20px;
+        }
+
+        div.slide p {
+          font-size: 32px;
+        }
+
+        .slide.far-past {
+          display: block;
+          margin-left: -2400px;
+        }
+
+        .slide.past {
+          display: block;
+          margin-left: -1400px;
+        }
+
+        .slide.current {
+          display: block;
+          margin-left: -450px;
+        }
+
+        .slide.future {
+          display: block;
+          margin-left: 500px;
+        }
+
+        .slide.far-future {
+          display: block;
+          margin-left: 1500px;
+        }
+
+        body.three-d div.slides {
+          -webkit-transform: translateX(50px) scale(0.8) rotateY(10deg);
+          -moz-transform: translateX(50px) scale(0.8) rotateY(10deg);
+          -o-transform: translateX(50px) scale(0.8) rotateY(10deg);
+        }
+
+
+        /* Content */
+
+        header:not(:only-child) {
+          font-family: 'Lucida Grande';
+          font-weight: normal;
+          font-size: 60px;
+          letter-spacing: -.05em;
+          color: white;
+          color: black;
+          text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+          position: absolute;
+          left: 30px;
+          top: 25px;
+          margin: 0;
+          padding: 0;
+        }
+
+        h1 {
+          display: inline;
+          font-size: 56px;
+          font-weight: normal;
+          padding: 0;
+          margin: 0;
+        }
+
+        h2 {
+          color: black;
+          font-size: 36px;
+          padding: 0;
+          margin: 15px 0px 5px 0px;
+        }
+
+        h2:first-child {
+          margin-top: 0;
+        }
+
+        section, .slide header:only-child h1 {
+          font-family: 'Lucida Grande';
+          color: #3f3f3f;
+          text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+          margin-left: 30px;
+          margin-right: 30px;
+          margin-top: 100px;
+          display: block;
+          overflow: hidden;
+        }
+
+        a {
+          color: inherit;
+          display: inline-block;
+          text-decoration: none;
+          line-height: 110%;
+          border-bottom: 2px solid #3f3f3f;
+        }
+
+        pre {
+          font-size: 18px;
+          font-family: Monaco, Courier, monospace;
+        }
+
+        ul {
+            margin: 5px;
+        }
+        li {
+          padding: 10px 0;
+          font-size: 32px;
+        }
+
+        section.title, .slide header:only-child h1 {
+          line-height: 180%;
+          text-align: center;
+          display: table-cell;
+          vertical-align: middle;
+          height: 700px;
+          width: 900px;
+        }
+
+        section.title p:only-child {
+          font-size: 120px;
+          margin-top:100px;
+          margin-bottom:100px;
+        }
+        .slide header:only-child h1 {
+          font-size: 64px;
+          margin-top:100px;
+          margin-bottom:100px;
+        }
+    </style>
+    <script>
+        function main() {
+          // Since we don't have the fallback of attachEvent and
+          // other IE only stuff we won't try to run JS for IE.
+          // It will run though when using Google Chrome Frame
+          if (document.all) { return; }
+
+          var currentSlideNo;
+          var notesOn = false;
+          var slides = document.getElementsByClassName('slide');
+          var touchStartX = 0;
+
+          // var slide_hash = window.location.hash.replace(/#/, '');
+          // if (slide_hash) {
+          //   for (var i = 0, len = slides.length; i < len; i++) {
+          //     if (slides[i].id == slide_hash) {
+          //       currentSlideNo = i;
+          //       updateSlideClasses();
+          //     }
+          //   }
+          // }
+
+          var spaces = /\s+/, a1 = [""];
+
+          var str2array = function(s) {
+            if (typeof s == "string" || s instanceof String) {
+              if (s.indexOf(" ") < 0) {
+                a1[0] = s;
+                return a1;
+              } else {
+                return s.split(spaces);
+              }
+            }
+            return s;
+          };
+
+          var trim = function(str) {
+            return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+          };
+
+          var addClass = function(node, classStr) {
+            classStr = str2array(classStr);
+            var cls = " " + node.className + " ";
+            for (var i = 0, len = classStr.length, c; i < len; ++i) {
+              c = classStr[i];
+              if (c && cls.indexOf(" " + c + " ") < 0) {
+                cls += c + " ";
+              }
+            }
+            node.className = trim(cls);
+          };
+
+          var removeClass = function(node, classStr) {
+            var cls;
+            if (classStr !== undefined) {
+              classStr = str2array(classStr);
+              cls = " " + node.className + " ";
+              for (var i = 0, len = classStr.length; i < len; ++i) {
+                cls = cls.replace(" " + classStr[i] + " ", " ");
+              }
+              cls = trim(cls);
+            } else {
+              cls = "";
+            }
+            if (node.className != cls) {
+              node.className = cls;
+            }
+          };
+
+          var getSlideEl = function(slideNo) {
+            if (slideNo > 0) {
+              return slides[slideNo - 1];
+            } else {
+              return null;
+            }
+          };
+
+          var getSlideTitle = function(slideNo) {
+            var el = getSlideEl(slideNo);
+
+            if (el) {
+              return el.getElementsByTagName('header')[0].innerHTML;
+            } else {
+              return null;
+            }
+          };
+
+          var changeSlideElClass = function(slideNo, className) {
+            var el = getSlideEl(slideNo);
+
+            if (el) {
+              removeClass(el, 'far-past past current future far-future');
+              addClass(el, className);
+            }
+          };
+
+          var updateSlideClasses = function() {
+            window.location.hash = "slide" + currentSlideNo;
+            changeSlideElClass(currentSlideNo - 2, 'far-past');
+            changeSlideElClass(currentSlideNo - 1, 'past');
+            changeSlideElClass(currentSlideNo, 'current');
+            changeSlideElClass(currentSlideNo + 1, 'future');
+            changeSlideElClass(currentSlideNo + 2, 'far-future');
+          };
+
+          var nextSlide = function() {
+            if (currentSlideNo < slides.length) {
+              currentSlideNo++;
+            }
+
+            updateSlideClasses();
+          };
+
+          var prevSlide = function() {
+            if (currentSlideNo > 1) {
+              currentSlideNo--;
+            }
+            updateSlideClasses();
+          };
+
+          var showNotes = function() {
+            var notes = document.querySelectorAll('.notes');
+            for (var i = 0, len = notes.length; i < len; i++) {
+              notes[i].style.display = (notesOn) ? 'none':'block';
+            }
+            notesOn = (notesOn) ? false:true;
+          };
+
+          var switch3D = function() {
+            if (document.body.className.indexOf('three-d') == -1) {
+              document.getElementsByClassName('presentation')[0].style.webkitPerspective = '1000px';
+              document.body.className += ' three-d';
+            } else {
+              window.setTimeout("document.getElementsByClassName('presentation')[0].style.webkitPerspective = '0';", 2000);
+              document.body.className = document.body.className.replace(/three-d/, '');
+            }
+          };
+
+          var handleBodyKeyDown = function(event) {
+            // console.log(event.keyCode);
+            switch (event.keyCode) {
+              case 37: // left arrow
+                prevSlide();
+                break;
+              case 39: // right arrow
+              // case 32: // space
+                nextSlide();
+                break;
+              case 50: // 2
+                showNotes();
+                break;
+              case 51: // 3
+                switch3D();
+                break;
+            }
+          };
+
+          var addTouchListeners = function() {
+            document.addEventListener('touchstart', function(e) {
+              touchStartX = e.touches[0].pageX;
+            }, false);
+            document.addEventListener('touchend', function(e) {
+              var pixelsMoved = touchStartX - e.changedTouches[0].pageX;
+              var SWIPE_SIZE = 150;
+              if (pixelsMoved > SWIPE_SIZE) {
+                nextSlide();
+              }
+              else if (pixelsMoved < -SWIPE_SIZE) {
+               prevSlide();
+              }
+            }, false);
+          };
+
+          // initialize
+
+          (function() {
+            if (window.location.hash != "") {
+              currentSlideNo = Number(window.location.hash.replace('#slide', ''));
+            } else {
+              currentSlideNo = 1;
+            }
+
+            document.addEventListener('keydown', handleBodyKeyDown, false);
+
+            var els = slides;
+            for (var i = 0, el; el = els[i]; i++) {
+              addClass(el, 'slide far-future');
+            }
+            updateSlideClasses();
+
+            // add support for finger events (filter it by property detection?)
+            addTouchListeners();
+          })();
+        };
+    </script>
+</head>
+<body>
+    <div class="presentation">
+      <div class="slides">
+        <div class="slide">
+            <section class="title"><p>gevent</p>
+</section>
+        </div>
+        
+          <div class="slide">
+              <header><h1>お前誰よ</h1></header>
+              
+                  <section><p>稲田 直哉 (@methane)</p>
+<p>KLab株式会社</p>
+<p>msgpack-python</p>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Summary</h1></header>
+              
+                  <section><ul>
+<li><big>gevent って何?</big></li>
+<li><big>どう使うの?</big></li>
+</ul>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>gevent って何?</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>gevent = libev x greenlet</h1></header>
+              
+                  <section><p>libev = イベントドリブンプログラミング</p>
+<p>greenlet = 軽量プロセス</p>
+<p>主にネットワークプログラミングにおいて力を発揮</p>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>libev</h1></header>
+              
+                  <section><p>クロスプラットフォームなイベントドリブンプログラミング</p>
+<ul>
+<li>writable/readable になったら送受信</li>
+<li>ファイルが更新されたらXXXする</li>
+<li>時間がたったらXXXする</li>
+</ul>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>イベントドリブン</h1></header>
+              
+                  <section><p>a.k.a. 非同期プログラミング</p>
+<p>&lt;=&gt;  スレッド＋ブロッキング</p>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>echo (blocking)</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span>     <span style="color: #008000; font-weight: bold">try</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span>         <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span>             <span style="color: #408080; font-style: italic"># 受信するまでブロック</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>             data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>             <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>                 <span style="color: #008000; font-weight: bold">break</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>             <span style="color: #408080; font-style: italic"># 送信するまでブロック</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>             sock<span style="color: #666666">.</span>sendall(data)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>     <span style="color: #008000; font-weight: bold">finally</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         sock<span style="color: #666666">.</span>close()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">listener</span>(sock):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>     <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>         conn, addr <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>         <span style="color: #408080; font-style: italic"># クライアントごとにスレッドを立ち上げて並行処理</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span>         threading<span style="color: #666666">.</span>Thread(target<span style="color: #666666">=</span>echo, args<span style="color: #666666">=</span>(conn,)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>                          )<span style="color: #666666">.</span>start()
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>echo (asynchronous)</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> loop <span style="color: #666666">=</span> gevent<span style="color: #666666">.</span>get_hub()<span style="color: #666666">.</span>loop
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>     watcher <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>io(sock<span style="color: #666666">.</span>fileno(), <span style="color: #666666">1</span>) <span style="color: #408080; font-style: italic"># 1 = READ</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>     buf <span style="color: #666666">=</span> []
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">callback</span>():
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>         <span style="color: #008000; font-weight: bold">try</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>             buf<span style="color: #666666">.</span>append(sock<span style="color: #666666">.</span>recv(<span style="color: #666666">4096</span>))
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">IOError</span> <span style="color: #008000; font-weight: bold">as</span> e:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span>             <span style="color: #008000; font-weight: bold">if</span> e<span style="color: #666666">.</span>errno <span style="color: #666666">==</span> errno<span style="color: #666666">.</span>EAGAIN:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span>                 <span style="color: #008000; font-weight: bold">pass</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>             <span style="color: #008000; font-weight: bold">raise</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>         <span style="color: #008000; font-weight: bold">if</span> buf:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>             data <span style="color: #666666">=</span> buf[<span style="color: #666666">0</span>]
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span>             <span style="color: #008000; font-weight: bold">try</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>                 sent <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>send(data)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">19</span>             <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">IOError</span> <span style="color: #008000; font-weight: bold">as</span> e:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">20</span>                 <span style="color: #008000; font-weight: bold">if</span> e<span style="color: #666666">.</span>errno <span style="color: #666666">==</span> errno<span style="color: #666666">.</span>EAGAIN:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">21</span>                     <span style="color: #008000; font-weight: bold">pass</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">22</span>                 <span style="color: #008000; font-weight: bold">raise</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">23</span>             <span style="color: #008000; font-weight: bold">else</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">24</span>                 <span style="color: #008000; font-weight: bold">if</span> sent <span style="color: #666666">==</span> <span style="color: #008000">len</span>(data):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">25</span>                     buf<span style="color: #666666">.</span>pop(<span style="color: #666666">0</span>)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">26</span>             <span style="color: #008000; font-weight: bold">else</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">27</span>                 buf[<span style="color: #666666">0</span>] <span style="color: #666666">=</span> data[sent:]
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">28</span>         watcher<span style="color: #666666">.</span>stop()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">29</span>         <span style="color: #008000; font-weight: bold">if</span> buf:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">30</span>             watcher<span style="color: #666666">.</span>event <span style="color: #666666">=</span> <span style="color: #666666">3</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">31</span>         <span style="color: #008000; font-weight: bold">else</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">32</span>             watcher<span style="color: #666666">.</span>event <span style="color: #666666">=</span> <span style="color: #666666">1</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">33</span>         watcher<span style="color: #666666">.</span>start()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">34</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">35</span>     watcher<span style="color: #666666">.</span>start(callback)
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>greenlet</h1></header>
+              
+                  <section><p>並行プログラミングのための軽量スレッド</p>
+<ul>
+<li>高効率</li>
+<li>同期不要 (cooperative)</li>
+</ul>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>gevent</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px">1</span> <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">2</span>     fd, <span style="border: 1px solid #FF0000">イベント</span> <span style="color: #666666">=</span> <span style="border: 1px solid #FF0000">イベントを待つ</span>()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">3</span>     greenlets[fd]<span style="color: #666666">.</span>switch()
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>イベントドリブンプログラミング</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> ioloop
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock, loop<span style="color: #666666">=</span><span style="color: #008000">None</span>):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop <span style="color: #666666">=</span> loop <span style="color: #AA22FF; font-weight: bold">or</span> ioloop<span style="color: #666666">.</span>IOLoop<span style="color: #666666">.</span>instance()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #BA2121">&#39;&#39;</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>         loop<span style="color: #666666">.</span>add_handler(sock<span style="color: #666666">.</span>fileno(), <span style="color: #008000">self</span><span style="color: #666666">.</span>handle, loop<span style="color: #666666">.</span>READ)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handle</span>(<span style="color: #008000">self</span>, fd, event):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span>             <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">+=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024**2</span>)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>         <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>             sent <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>send(<span style="color: #008000">self</span><span style="color: #666666">.</span>_buf)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>             <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf[sent:]
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>         <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">19</span>             loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ<span style="color: #666666">|</span><span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">20</span>         <span style="color: #008000; font-weight: bold">else</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">21</span>             loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ)
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>非イベントドリブンプログラミング</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px">1</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">2</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">3</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">4</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">5</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_reader <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>read)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">6</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_writer <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>write)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">7</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">read</span>(<span style="color: #008000">self</span>):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">8</span>         <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">9</span>             <span style="color: #008000">self</span>
+</pre></div>
+</pre>
+<h1>html5-slides-markdown</h1>
+<p>Generates a slideshow using the slides that power
+<a href="http://apirocks.com/html5/html5.html">the html5-slides presentation</a>.</p>
+<p>A <code>python</code> with the <code>jinja2</code>, <code>markdown</code>, and <code>pygments</code> modules is required.</p>
+<h2>Markdown Formatting Instructions</h2>
+<ul>
+<li>Separate your slides with a horizontal rule (--- in markdown)</li>
+<li>Your first slide (title slide) should not have a heading, only <code>&lt;p&gt;</code>s</li>
+<li>Your other slides should have a heading that renders to an h1 element</li>
+<li>To highlight blocks of code, put !{{lang}} as the first indented line</li>
+<li>See the included slides.md for an example</li>
+</ul>
+<h2>Rendering Instructions</h2>
+<ul>
+<li>Put your markdown content in a file called <code>slides.md</code></li>
+<li>Run <code>python render.py</code></li>
+<li>Enjoy your newly generated <code>presentation.html</code></li>
+</ul>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Slide #2</h1></header>
+              
+                  <section><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean magna tellus,
+fermentum nec venenatis nec, dapibus id metus. Phasellus nulla massa, consequat
+nec tempor et, elementum viverra est. Duis sed nisl in eros adipiscing tempor.</p>
+<h2>Section #1</h2>
+<p>Integer in dignissim ipsum. Integer pretium nulla at elit facilisis eu feugiat
+velit consectetur.</p>
+<h2>Section #2</h2>
+<p>Donec risus tortor, dictum sollicitudin ornare eu, egestas at purus. Cras
+consequat lacus vitae lectus faucibus et molestie nisl gravida. Donec tempor,
+tortor in varius vestibulum, mi odio laoreet magna, in hendrerit nibh neque eu
+eros.</p>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Middle slide</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Slide #3</h1></header>
+              
+                  <section><p><strong>Hello Gentlemen</strong></p>
+<ul>
+<li>Mega Man 2</li>
+<li>Mega Man 3</li>
+<li>Spelunky</li>
+<li>Dungeon Crawl Stone Soup</li>
+<li>Etrian Odyssey</li>
+</ul>
+<p><em>Are you prepared to see beyond the veil of reason?</em> - DeceasedCrab</p>
+<ul>
+<li>Black Cascade</li>
+<li>Two Hunters</li>
+<li>Diadem of 12 Stars</li>
+</ul>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Slide #4</h1></header>
+              
+                  <section><h2>render.py</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">jinja2</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">markdown</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span> <span style="color: #008000; font-weight: bold">with</span> <span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;presentation.html&#39;</span>, <span style="color: #BA2121">&#39;w&#39;</span>) <span style="color: #008000; font-weight: bold">as</span> outfile:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>     slides_src <span style="color: #666666">=</span> markdown<span style="color: #666666">.</span>markdown(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;slides.md&#39;</span>)<span style="color: #666666">.</span>read())<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;&lt;hr /&gt;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>     slides <span style="color: #666666">=</span> []
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>     <span style="color: #008000; font-weight: bold">for</span> slide_src <span style="color: #AA22FF; font-weight: bold">in</span> slides_src:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>         header, content <span style="color: #666666">=</span> slide_src<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>, <span style="color: #666666">1</span>)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         slides<span style="color: #666666">.</span>append({<span style="color: #BA2121">&#39;header&#39;</span>: header, <span style="color: #BA2121">&#39;content&#39;</span>: content})
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span>     template <span style="color: #666666">=</span> jinja2<span style="color: #666666">.</span>Template(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;base.html&#39;</span>)<span style="color: #666666">.</span>read())
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>     outfile<span style="color: #666666">.</span>write(template<span style="color: #666666">.</span>render({<span style="color: #BA2121">&#39;slides&#39;</span>: slides}))
+</pre></div>
+</pre></section>
+              
+          </div>
+        
+      </div>
+    </div>
+    <script>
+        main()
+    </script>
+</body>
+</html>
