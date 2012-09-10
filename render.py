@@ -49,7 +49,7 @@ def render():
 
 
 def main():
-    with io.open('presentation.html', 'w', encoding='utf8') as outfile:
+    with io.open('index.html', 'w', encoding='utf8') as outfile:
         outfile.write(render())
 
 if __name__ == '__main__':
