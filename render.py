@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import codecs
+import io
 import re
 import jinja2
 import markdown
@@ -8,8 +8,9 @@ import pygments
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
-with codecs.open('presentation.html', 'w', encoding='utf8') as outfile:
-    md_src = codecs.open('slides.md', encoding='utf8').read()
+
+def render():
+    md_src = io.open('slides.md', encoding='utf8').read()
     slides_src = markdown.markdown(md_src).split('<hr />\n')
 
     title = slides_src.pop(0)
@@ -44,5 +45,12 @@ with codecs.open('presentation.html', 'w', encoding='utf8') as outfile:
         slides.append({'header': header, 'content': content})
 
     template = jinja2.Template(open('base.html').read())
+    return template.render(locals())
 
-    outfile.write(template.render(locals()))
+
+def main():
+    with io.open('presentation.html', 'w', encoding='utf8') as outfile:
+        outfile.write(render())
+
+if __name__ == '__main__':
+    main()
