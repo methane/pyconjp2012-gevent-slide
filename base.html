@@ -27,7 +27,6 @@
     <title>{{ head_title }}</title>
     <style type = "text/css">
         body {
-          font: 14px "Lucida Grande", "Trebuchet MS", Verdana, sans-serif;
           background: #778;
           padding: 0;
           margin: 0;
@@ -86,7 +85,7 @@
         }
 
         div.slide p {
-          font-size: 20px;
+          font-size: 32px;
         }
 
         .slide.far-past {
@@ -126,7 +125,7 @@
         header:not(:only-child) {
           font-family: 'Lucida Grande';
           font-weight: normal;
-          font-size: 50px;
+          font-size: 60px;
           letter-spacing: -.05em;
           color: white;
           color: black;
@@ -140,18 +139,17 @@
 
         h1 {
           display: inline;
-          font-size: 100%;
+          font-size: 56px;
           font-weight: normal;
           padding: 0;
           margin: 0;
         }
 
         h2 {
-          font-family: 'Lucida Grande';
           color: black;
-          font-size: 32px;
-          margin-left: 20px;
-          margin-top: 50px;
+          font-size: 36px;
+          padding: 0;
+          margin: 15px 0px 5px 0px;
         }
 
         h2:first-child {
@@ -177,19 +175,17 @@
           border-bottom: 2px solid #3f3f3f;
         }
 
-        h2 {
-          padding: 0;
-          margin: 15px 0 5px 0;
-        }
-
         pre {
-          font-size: 16px;
+          font-size: 18px;
           font-family: Monaco, Courier, monospace;
         }
 
+        ul {
+            margin: 5px;
+        }
         li {
           padding: 10px 0;
-          font-size: 20px;
+          font-size: 32px;
         }
 
         section.title, .slide header:only-child h1 {
@@ -201,8 +197,13 @@
           width: 900px;
         }
 
-        section.title p, .slide header:only-child h1 {
-          font-size: 50px;
+        section.title p:only-child {
+          font-size: 120px;
+          margin-top:100px;
+          margin-bottom:100px;
+        }
+        .slide header:only-child h1 {
+          font-size: 64px;
           margin-top:100px;
           margin-bottom:100px;
         }
