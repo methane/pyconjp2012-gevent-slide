@@ -55,6 +55,13 @@
           -o-transition: -o-transform 1s ease-in-out;
         }
 
+        p {
+            margin-top: 0.3em;
+        }
+        strong {
+            color: red;
+        }
+
         div.slide {
           display: none;
           position: absolute;
@@ -149,11 +156,11 @@
           color: black;
           font-size: 36px;
           padding: 0;
-          margin: 15px 0px 5px 0px;
+          margin: 30px 0px 0px 0px;
         }
 
         h2:first-child {
-          margin-top: 0;
+          margin-top: 20px;
         }
 
         section, .slide header:only-child h1 {
@@ -428,6 +435,7 @@
                   <section><ul>
 <li><big>gevent って何?</big></li>
 <li><big>どう使うの?</big></li>
+<li><big>他の方法と比べてどうなの?</big></li>
 </ul>
 </section>
               
@@ -441,23 +449,14 @@
           <div class="slide">
               <header><h1>gevent = libev x greenlet</h1></header>
               
-                  <section><p>libev = イベントドリブンプログラミング</p>
-<p>greenlet = 軽量プロセス</p>
-<p>主にネットワークプログラミングにおいて力を発揮</p>
-</section>
-              
-          </div>
-        
-          <div class="slide">
-              <header><h1>libev</h1></header>
-              
-                  <section><p>クロスプラットフォームなイベントドリブンプログラミング</p>
-<p>主に <strong>IO多重化</strong> を目的にしている.</p>
-<ul>
-<li>writable/readable になったら送受信</li>
-<li>ファイルが更新されたらXXXする</li>
-<li>時間がたったらXXXする</li>
-</ul>
+                  <section><h2>libev</h2>
+<p>クロスプラットフォームな
+イベントドリブンプログラミング
+効率のいい <strong>IO多重化</strong> を実現</p>
+<h2>greenlet</h2>
+<p>軽量スレッド</p>
+<h2>gevent</h2>
+<p>2つを組み合わせて <strong>簡単かつ効率のいいIO多重化</strong> を実現</p>
 </section>
               
           </div>
@@ -465,39 +464,78 @@
           <div class="slide">
               <header><h1>IO多重化</h1></header>
               
-                  <section><p>non-blocking + event</p>
-<pre><code>vs
-</code></pre>
-<p>blocking + thread</p>
+                  <section><p>複数のIO処理を並行に行う.</p>
+<h2>blocking + thread</h2>
+<p>並行処理のためにスレッドを使う.</p>
+<p>IO待ちのためにスレッドを止める(ブロック)</p>
+<h2>nonblocking + event driven</h2>
+<p>複数のIO待ちをまとめて監視 (select, epoll, kqueue)</p>
+<p>実行可能になったIOを処理する.</p>
 </section>
               
           </div>
         
           <div class="slide">
-              <header><h1>echo (IO多重化なし)</h1></header>
+              <header><h1>echoサーバーを作ろう</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span>     <span style="color: #008000; font-weight: bold">try</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>         <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>             data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>) <span style="color: #408080; font-style: italic"># 受信するまでブロック</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>             <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>                 <span style="color: #008000; font-weight: bold">break</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>             sock<span style="color: #666666">.</span>sendall(data) <span style="color: #408080; font-style: italic"># 送信するまでブロック</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>     <span style="color: #008000; font-weight: bold">finally</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         sock<span style="color: #666666">.</span>close()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">listener</span>(addr):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>     sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>     sock<span style="color: #666666">.</span>bind(addr)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>     sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span>     <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>         conn, addr <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">19</span>         echo(conn)  <span style="color: #408080; font-style: italic"># 接続切れるまで次の接続を受け付けない.</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">20</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">21</span> <span style="color: #008000; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #BA2121">&#39;__main__&#39;</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">22</span>     listener((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
+          </div>
+        
+          <div class="slide">
+              <header><h1>IO多重化なし</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>) <span style="color: #408080; font-style: italic"># 受信できるまでブロック</span>
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                <span style="color: #008000; font-weight: bold">break</span>
+            sock<span style="color: #666666">.</span>sendall(data) <span style="color: #408080; font-style: italic"># 送信できるまでブロック</span>
+    <span style="color: #008000; font-weight: bold">finally</span>:
+        sock<span style="color: #666666">.</span>close()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+    sock<span style="color: #666666">.</span>bind(addr); sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+    <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+        conn, _ <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept() <span style="color: #408080; font-style: italic"># 接続されるまでブロック</span>
+        echo(conn) <span style="color: #408080; font-style: italic"># 接続が終わるまでブロック</span>
+
+<span style="color: #008000; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #BA2121">&#39;__main__&#39;</span>:
+    serve((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+<p><strong>1クライアントとしか通信できない</strong></p>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>スレッド</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">threading</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>) <span style="color: #408080; font-style: italic"># 受信できるまでブロック</span>
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                <span style="color: #008000; font-weight: bold">break</span>
+            sock<span style="color: #666666">.</span>sendall(data) <span style="color: #408080; font-style: italic"># 送信できるまでブロック</span>
+    <span style="color: #008000; font-weight: bold">finally</span>:
+        sock<span style="color: #666666">.</span>close()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+    sock<span style="color: #666666">.</span>bind(addr); sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+    <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+        conn, _ <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
+        <span style="color: #408080; font-style: italic"># クライアントごとにスレッドを立ち上げて並行処理</span>
+        threading<span style="color: #666666">.</span>Thread(target<span style="color: #666666">=</span>echo, args<span style="color: #666666">=</span>(conn,))<span style="color: #666666">.</span>start()
+
+<span style="color: #008000; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #BA2121">&#39;__main__&#39;</span>:
+    serve((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
 </pre></div>
 </pre>
 </section>
@@ -505,26 +543,31 @@
           </div>
         
           <div class="slide">
-              <header><h1>echo (blocking)</h1></header>
+              <header><h1>nonblocking + select (1)</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span>     <span style="color: #008000; font-weight: bold">try</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span>         <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span>             <span style="color: #408080; font-style: italic"># 受信するまでブロック</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>             data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>             <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>                 <span style="color: #008000; font-weight: bold">break</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>             <span style="color: #408080; font-style: italic"># 送信するまでブロック</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>             sock<span style="color: #666666">.</span>sendall(data)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>     <span style="color: #008000; font-weight: bold">finally</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         sock<span style="color: #666666">.</span>close()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">listener</span>(sock):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>     <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>         conn, addr <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>         <span style="color: #408080; font-style: italic"># クライアントごとにスレッドを立ち上げて並行処理</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span>         threading<span style="color: #666666">.</span>Thread(target<span style="color: #666666">=</span>echo, args<span style="color: #666666">=</span>(conn,)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>                          )<span style="color: #666666">.</span>start()
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">select</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">errno</span>
+
+read_handlers <span style="color: #666666">=</span> {}
+write_handlers <span style="color: #666666">=</span> {}
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">call_handlers</span>(handlers, fds):
+    <span style="color: #008000; font-weight: bold">for</span> fd <span style="color: #AA22FF; font-weight: bold">in</span> fds:
+        <span style="color: #008000; font-weight: bold">try</span>:
+            handlers[fd]()
+        <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">IOError</span> <span style="color: #008000; font-weight: bold">as</span> e:
+            <span style="color: #008000; font-weight: bold">if</span> e<span style="color: #666666">.</span>errno <span style="color: #AA22FF; font-weight: bold">in</span> (errno<span style="color: #666666">.</span>EAGAIN, errno<span style="color: #666666">.</span>EWOULDBLOCK):
+                <span style="color: #008000; font-weight: bold">continue</span>
+        <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">KeyError</span>:
+            <span style="color: #008000; font-weight: bold">pass</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">loop</span>():
+    <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+        reads, writes, _ <span style="color: #666666">=</span> select<span style="color: #666666">.</span>select(
+                read_handlers<span style="color: #666666">.</span>keys(),
+                write_handlers<span style="color: #666666">.</span>keys(),
+                [])
+        call_handlers(read_handlers, reads)
+        call_handlers(write_handlers, writes)
 </pre></div>
 </pre>
 </section>
@@ -532,46 +575,152 @@
           </div>
         
           <div class="slide">
-              <header><h1>echo (asynchronous)</h1></header>
+              <header><h1>nonblocking + select (2)</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> loop <span style="color: #666666">=</span> gevent<span style="color: #666666">.</span>get_hub()<span style="color: #666666">.</span>loop
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>     watcher <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>io(sock<span style="color: #666666">.</span>fileno(), <span style="color: #666666">1</span>) <span style="color: #408080; font-style: italic"># 1 = READ</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>     buf <span style="color: #666666">=</span> []
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">callback</span>():
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>         <span style="color: #008000; font-weight: bold">try</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>             buf<span style="color: #666666">.</span>append(sock<span style="color: #666666">.</span>recv(<span style="color: #666666">4096</span>))
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">IOError</span> <span style="color: #008000; font-weight: bold">as</span> e:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span>             <span style="color: #008000; font-weight: bold">if</span> e<span style="color: #666666">.</span>errno <span style="color: #666666">==</span> errno<span style="color: #666666">.</span>EAGAIN:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span>                 <span style="color: #008000; font-weight: bold">pass</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>             <span style="color: #008000; font-weight: bold">raise</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>         <span style="color: #008000; font-weight: bold">if</span> buf:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>             data <span style="color: #666666">=</span> buf[<span style="color: #666666">0</span>]
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span>             <span style="color: #008000; font-weight: bold">try</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>                 sent <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>send(data)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">19</span>             <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">IOError</span> <span style="color: #008000; font-weight: bold">as</span> e:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">20</span>                 <span style="color: #008000; font-weight: bold">if</span> e<span style="color: #666666">.</span>errno <span style="color: #666666">==</span> errno<span style="color: #666666">.</span>EAGAIN:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">21</span>                     <span style="color: #008000; font-weight: bold">pass</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">22</span>                 <span style="color: #008000; font-weight: bold">raise</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">23</span>             <span style="color: #008000; font-weight: bold">else</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">24</span>                 <span style="color: #008000; font-weight: bold">if</span> sent <span style="color: #666666">==</span> <span style="color: #008000">len</span>(data):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">25</span>                     buf<span style="color: #666666">.</span>pop(<span style="color: #666666">0</span>)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">26</span>             <span style="color: #008000; font-weight: bold">else</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">27</span>                 buf[<span style="color: #666666">0</span>] <span style="color: #666666">=</span> data[sent:]
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">28</span>         watcher<span style="color: #666666">.</span>stop()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">29</span>         <span style="color: #008000; font-weight: bold">if</span> buf:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">30</span>             watcher<span style="color: #666666">.</span>event <span style="color: #666666">=</span> <span style="color: #666666">3</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">31</span>         <span style="color: #008000; font-weight: bold">else</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">32</span>             watcher<span style="color: #666666">.</span>event <span style="color: #666666">=</span> <span style="color: #666666">1</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">33</span>         watcher<span style="color: #666666">.</span>start()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">34</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">35</span>     watcher<span style="color: #666666">.</span>start(callback)
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">ServerHandler</span>(<span style="color: #008000">object</span>):
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
+        sock<span style="color: #666666">.</span>setblocking(<span style="color: #666666">0</span>)
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>sock <span style="color: #666666">=</span> sock
+        read_handlers[sock<span style="color: #666666">.</span>fileno()] <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>on_readable
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_readable</span>(<span style="color: #008000">self</span>):
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            conn, _ <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>accept()
+            EchoHandler(conn)
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+    sock<span style="color: #666666">.</span>bind(addr)
+    sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+    ServerHandler(sock)
+    loop()
+
+<span style="color: #408080; font-style: italic">#...</span>
+
+<span style="color: #008000; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #BA2121">&#39;__main__&#39;</span>:
+    serve((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
 </pre></div>
 </pre>
 </section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>nonblocking + select (3)</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
+        sock<span style="color: #666666">.</span>setblocking(<span style="color: #666666">0</span>)
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>sock <span style="color: #666666">=</span> sock
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>buf <span style="color: #666666">=</span> []
+        read_handlers[sock<span style="color: #666666">.</span>fileno()] <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>on_readable
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_readable</span>(<span style="color: #008000">self</span>):
+        <span style="color: #008000; font-weight: bold">try</span>:
+            <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+                data <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>recv(<span style="color: #666666">4096</span>)
+                <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                    <span style="color: #008000">self</span><span style="color: #666666">.</span>close()
+                    <span style="color: #008000; font-weight: bold">return</span>
+                <span style="color: #008000">self</span><span style="color: #666666">.</span>buf<span style="color: #666666">.</span>append(data)
+        <span style="color: #008000; font-weight: bold">finally</span>:
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf:
+                write_handlers[<span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno()] <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>on_writable
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>nonblocking + select(4)</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%">    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_writable</span>(<span style="color: #008000">self</span>):
+        <span style="color: #008000; font-weight: bold">try</span>:
+            <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf:
+                data <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf[<span style="color: #666666">0</span>]
+                sent <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>send(data)
+                data <span style="color: #666666">=</span> data[sent:]
+                <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                    <span style="color: #008000">self</span><span style="color: #666666">.</span>buf<span style="color: #666666">.</span>pop(<span style="color: #666666">0</span>)
+                <span style="color: #008000; font-weight: bold">else</span>:
+                    <span style="color: #008000">self</span><span style="color: #666666">.</span>buf[<span style="color: #666666">0</span>] <span style="color: #666666">=</span> data
+        <span style="color: #008000; font-weight: bold">finally</span>:
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf:
+                write_handlers[<span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno()] <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>on_writable
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">close</span>(<span style="color: #008000">self</span>):
+        fd <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno()
+        read_handlers<span style="color: #666666">.</span>pop(fd, <span style="color: #008000">None</span>)
+        write_handlers<span style="color: #666666">.</span>pop(fd, <span style="color: #008000">None</span>)
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>close()
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>buf <span style="color: #666666">=</span> []
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>めんどくさい?</h1></header>
+              
+                  <section><p>ほとんどが汎用的な処理<br />フレームワーク化可能</p>
+<h2>Tornado</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> ioloop, iostream
+<span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado.netutil</span> <span style="color: #008000; font-weight: bold">import</span> TCPServer
+
+<span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoServer</span>(TCPServer):
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handle_stream</span>(<span style="color: #008000">self</span>, stream, addr):
+        stream<span style="color: #666666">.</span>read_until_close(<span style="color: #008000; font-weight: bold">lambda</span> _: stream<span style="color: #666666">.</span>close(),
+                                stream<span style="color: #666666">.</span>write)
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    server <span style="color: #666666">=</span> EchoServer()
+    server<span style="color: #666666">.</span>listen(addr[<span style="color: #666666">1</span>], addr[<span style="color: #666666">0</span>])
+    ioloop<span style="color: #666666">.</span>IOLoop<span style="color: #666666">.</span>instance()<span style="color: #666666">.</span>start()
+
+<span style="color: #008000; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #BA2121">&#39;__main__&#39;</span>:
+    serve((<span style="color: #BA2121">&#39;&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>geventで多重化</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.monkey</span>; gevent<span style="color: #666666">.</span>monkey<span style="color: #666666">.</span>patch_all()
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">threading</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>) <span style="color: #408080; font-style: italic"># 受信できるまでブロック</span>
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                <span style="color: #008000; font-weight: bold">break</span>
+            sock<span style="color: #666666">.</span>sendall(data) <span style="color: #408080; font-style: italic"># 送信できるまでブロック</span>
+    <span style="color: #008000; font-weight: bold">finally</span>:
+        sock<span style="color: #666666">.</span>close()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+    sock<span style="color: #666666">.</span>bind(addr); sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+    <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+        conn, _ <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
+        <span style="color: #408080; font-style: italic"># クライアントごとにスレッドを立ち上げて並行処理</span>
+        threading<span style="color: #666666">.</span>Thread(target<span style="color: #666666">=</span>echo, args<span style="color: #666666">=</span>(conn,))<span style="color: #666666">.</span>start()
+
+<span style="color: #008000; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #BA2121">&#39;__main__&#39;</span>:
+    serve((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1><strong>gevent.monkey.patch_all()</strong><br/> するだけ！</h1></header>
               
           </div>
         
@@ -579,20 +728,41 @@
               <header><h1>greenlet</h1></header>
               
                   <section><p>並行プログラミングのための軽量スレッド</p>
+<h2>高効率</h2>
 <ul>
-<li>高効率</li>
-<li>同期不要 (cooperative)</li>
+<li>スレッドごとに大きなスタックエリアを取らない</li>
+<li>スイッチのオーバーヘッドが軽い</li>
+<li>高負荷時のスループット低下が無い</li>
+</ul>
+<h2>協調型(cooperative)</h2>
+<ul>
+<li>勝手にスイッチしない(スレッドセーフに書きやすい)</li>
 </ul>
 </section>
               
           </div>
         
           <div class="slide">
+              <header><h1>todo</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>...</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>...</h1></header>
+              
+          </div>
+        
+          <div class="slide">
               <header><h1>gevent</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px">1</span> <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">2</span>     fd, <span style="border: 1px solid #FF0000">イベント</span> <span style="color: #666666">=</span> <span style="border: 1px solid #FF0000">イベントを待つ</span>()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">3</span>     greenlets[fd]<span style="color: #666666">.</span>switch()
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+    fd, <span style="border: 1px solid #FF0000">イベント</span> <span style="color: #666666">=</span> <span style="border: 1px solid #FF0000">イベントを待つ</span>()
+    greenlets[fd]<span style="color: #666666">.</span>switch()
 </pre></div>
 </pre>
 </section>
@@ -602,27 +772,27 @@
           <div class="slide">
               <header><h1>イベントドリブンプログラミング</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> ioloop
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock, loop<span style="color: #666666">=</span><span style="color: #008000">None</span>):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop <span style="color: #666666">=</span> loop <span style="color: #AA22FF; font-weight: bold">or</span> ioloop<span style="color: #666666">.</span>IOLoop<span style="color: #666666">.</span>instance()
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #BA2121">&#39;&#39;</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>         loop<span style="color: #666666">.</span>add_handler(sock<span style="color: #666666">.</span>fileno(), <span style="color: #008000">self</span><span style="color: #666666">.</span>handle, loop<span style="color: #666666">.</span>READ)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handle</span>(<span style="color: #008000">self</span>, fd, event):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span>             <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">+=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024**2</span>)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>         <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>             sent <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>send(<span style="color: #008000">self</span><span style="color: #666666">.</span>_buf)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>             <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf[sent:]
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>         <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">19</span>             loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ<span style="color: #666666">|</span><span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">20</span>         <span style="color: #008000; font-weight: bold">else</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">21</span>             loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ)
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> ioloop
+
+<span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock, loop<span style="color: #666666">=</span><span style="color: #008000">None</span>):
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop <span style="color: #666666">=</span> loop <span style="color: #AA22FF; font-weight: bold">or</span> ioloop<span style="color: #666666">.</span>IOLoop<span style="color: #666666">.</span>instance()
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #BA2121">&#39;&#39;</span>
+        loop<span style="color: #666666">.</span>add_handler(sock<span style="color: #666666">.</span>fileno(), <span style="color: #008000">self</span><span style="color: #666666">.</span>handle, loop<span style="color: #666666">.</span>READ)
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handle</span>(<span style="color: #008000">self</span>, fd, event):
+        <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ:
+            <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">+=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024**2</span>)
+
+        <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE:
+            sent <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>send(<span style="color: #008000">self</span><span style="color: #666666">.</span>_buf)
+            <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf[sent:]
+
+        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf:
+            loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ<span style="color: #666666">|</span><span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE)
+        <span style="color: #008000; font-weight: bold">else</span>:
+            loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ)
 </pre></div>
 </pre>
 </section>
@@ -632,19 +802,25 @@
           <div class="slide">
               <header><h1>非イベントドリブンプログラミング</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px">1</span> <span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">2</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">3</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">4</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">5</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_reader <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>read)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">6</span>         <span style="color: #008000">self</span><span style="color: #666666">.</span>_writer <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>write)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">7</span>     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">read</span>(<span style="color: #008000">self</span>):
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">8</span>         <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">9</span>             <span style="color: #008000">self</span>
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> 
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>_reader <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>read)
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>_writer <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>write)
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">read</span>(<span style="color: #008000">self</span>):
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            <span style="color: #008000">self</span>
 </pre></div>
 </pre>
-<h1>html5-slides-markdown</h1>
-<p>Generates a slideshow using the slides that power
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>html5-slides-markdown</h1></header>
+              
+                  <section><p>Generates a slideshow using the slides that power
 <a href="http://apirocks.com/html5/html5.html">the html5-slides presentation</a>.</p>
 <p>A <code>python</code> with the <code>jinja2</code>, <code>markdown</code>, and <code>pygments</code> modules is required.</p>
 <h2>Markdown Formatting Instructions</h2>
@@ -713,21 +889,21 @@ eros.</p>
               <header><h1>Slide #4</h1></header>
               
                   <section><h2>render.py</h2>
-<pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">jinja2</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">markdown</span>
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span> <span style="color: #008000; font-weight: bold">with</span> <span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;presentation.html&#39;</span>, <span style="color: #BA2121">&#39;w&#39;</span>) <span style="color: #008000; font-weight: bold">as</span> outfile:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>     slides_src <span style="color: #666666">=</span> markdown<span style="color: #666666">.</span>markdown(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;slides.md&#39;</span>)<span style="color: #666666">.</span>read())<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;&lt;hr /&gt;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>     slides <span style="color: #666666">=</span> []
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>     <span style="color: #008000; font-weight: bold">for</span> slide_src <span style="color: #AA22FF; font-weight: bold">in</span> slides_src:
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>         header, content <span style="color: #666666">=</span> slide_src<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>, <span style="color: #666666">1</span>)
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         slides<span style="color: #666666">.</span>append({<span style="color: #BA2121">&#39;header&#39;</span>: header, <span style="color: #BA2121">&#39;content&#39;</span>: content})
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span>     template <span style="color: #666666">=</span> jinja2<span style="color: #666666">.</span>Template(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;base.html&#39;</span>)<span style="color: #666666">.</span>read())
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span> 
-<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>     outfile<span style="color: #666666">.</span>write(template<span style="color: #666666">.</span>render({<span style="color: #BA2121">&#39;slides&#39;</span>: slides}))
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">jinja2</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">markdown</span>
+
+<span style="color: #008000; font-weight: bold">with</span> <span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;presentation.html&#39;</span>, <span style="color: #BA2121">&#39;w&#39;</span>) <span style="color: #008000; font-weight: bold">as</span> outfile:
+    slides_src <span style="color: #666666">=</span> markdown<span style="color: #666666">.</span>markdown(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;slides.md&#39;</span>)<span style="color: #666666">.</span>read())<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;&lt;hr /&gt;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>)
+
+    slides <span style="color: #666666">=</span> []
+
+    <span style="color: #008000; font-weight: bold">for</span> slide_src <span style="color: #AA22FF; font-weight: bold">in</span> slides_src:
+        header, content <span style="color: #666666">=</span> slide_src<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>, <span style="color: #666666">1</span>)
+        slides<span style="color: #666666">.</span>append({<span style="color: #BA2121">&#39;header&#39;</span>: header, <span style="color: #BA2121">&#39;content&#39;</span>: content})
+
+    template <span style="color: #666666">=</span> jinja2<span style="color: #666666">.</span>Template(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;base.html&#39;</span>)<span style="color: #666666">.</span>read())
+
+    outfile<span style="color: #666666">.</span>write(template<span style="color: #666666">.</span>render({<span style="color: #BA2121">&#39;slides&#39;</span>: slides}))
 </pre></div>
 </pre></section>
               
