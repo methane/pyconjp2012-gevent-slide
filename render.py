@@ -31,8 +31,7 @@ def render():
 
                 lexer = get_lexer_by_name(lang)
 
-                formatter = HtmlFormatter(linenos='inline', noclasses=True,
-                                          nobackground=True)
+                formatter = HtmlFormatter(noclasses=True, nobackground=True)
 
                 pretty_code = pygments.highlight(code, lexer, formatter)
                 pretty_code = pretty_code.replace('&amp;', '&')
