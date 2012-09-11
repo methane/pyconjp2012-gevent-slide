@@ -452,6 +452,7 @@
               <header><h1>libev</h1></header>
               
                   <section><p>クロスプラットフォームなイベントドリブンプログラミング</p>
+<p>主に <strong>IO多重化</strong> を目的にしている.</p>
 <ul>
 <li>writable/readable になったら送受信</li>
 <li>ファイルが更新されたらXXXする</li>
@@ -462,10 +463,43 @@
           </div>
         
           <div class="slide">
-              <header><h1>イベントドリブン</h1></header>
+              <header><h1>IO多重化</h1></header>
               
-                  <section><p>a.k.a. 非同期プログラミング</p>
-<p>&lt;=&gt;  スレッド＋ブロッキング</p>
+                  <section><p>non-blocking + event</p>
+<pre><code>vs
+</code></pre>
+<p>blocking + thread</p>
+</section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>echo (IO多重化なし)</h1></header>
+              
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 1</span> <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 2</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 3</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 4</span>     <span style="color: #008000; font-weight: bold">try</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 5</span>         <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 6</span>             data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>) <span style="color: #408080; font-style: italic"># 受信するまでブロック</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 7</span>             <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 8</span>                 <span style="color: #008000; font-weight: bold">break</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px"> 9</span>             sock<span style="color: #666666">.</span>sendall(data) <span style="color: #408080; font-style: italic"># 送信するまでブロック</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">10</span>     <span style="color: #008000; font-weight: bold">finally</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">11</span>         sock<span style="color: #666666">.</span>close()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">12</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">13</span> <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">listener</span>(addr):
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">14</span>     sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">15</span>     sock<span style="color: #666666">.</span>bind(addr)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">16</span>     sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">17</span>     <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">18</span>         conn, addr <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">19</span>         echo(conn)  <span style="color: #408080; font-style: italic"># 接続切れるまで次の接続を受け付けない.</span>
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">20</span> 
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">21</span> <span style="color: #008000; font-weight: bold">if</span> __name__ <span style="color: #666666">==</span> <span style="color: #BA2121">&#39;__main__&#39;</span>:
+<span style="background-color: #f0f0f0; padding: 0 5px 0 5px">22</span>     listener((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
 </section>
               
           </div>
