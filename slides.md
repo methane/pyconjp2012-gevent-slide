@@ -224,7 +224,28 @@ IO待ちのためにスレッドを止める(ブロック)
 
 ---
 
-#イベントドリブン<br />めんどくさい！
+#めんどくさい?
+
+ほとんどが汎用的な処理<br />フレームワーク化可能
+
+##Tornado
+
+    !python
+    from tornado import ioloop, iostream
+    from tornado.netutil import TCPServer
+
+    class EchoServer(TCPServer):
+        def handle_stream(self, stream, addr):
+            stream.read_until_close(lambda _: stream.close(),
+                                    stream.write)
+
+    def serve(addr):
+        server = EchoServer()
+        server.listen(addr[1], addr[0])
+        ioloop.IOLoop.instance().start()
+
+    if __name__ == '__main__':
+        serve(('', 4000))
 
 ---
 
@@ -274,10 +295,17 @@ IO待ちのためにスレッドを止める(ブロック)
 
 ---
 
-#以降はメモ、ゴミ、など
+#todo
 
 ---
 
+#...
+
+---
+
+#...
+
+---
 # gevent
 
     !python
@@ -328,6 +356,7 @@ IO待ちのためにスレッドを止める(ブロック)
             while True:
                 self
 
+---
 
 html5-slides-markdown
 =====================
