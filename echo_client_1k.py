@@ -17,6 +17,6 @@ def main():
             s.sendall('hello\n')
 
     for s in socks:
-        s.recv()
+        s.recv(1024)
 
 main()
