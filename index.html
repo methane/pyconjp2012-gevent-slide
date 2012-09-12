@@ -436,16 +436,16 @@
               <header><h1>Summary</h1></header>
               
                   <section><ul>
-<li><big>gevent って何?</big></li>
-<li><big>どう使うの?</big></li>
-<li><big>他の方法と比べてどうなの?</big></li>
+<li><big>目的</big></li>
+<li><big>仕組み</big></li>
+<li><big>どんな場面で使うべきか</big></li>
 </ul>
 </section>
               
           </div>
         
           <div class="slide">
-              <header><h1>gevent って何?</h1></header>
+              <header><h1>目的</h1></header>
               
           </div>
         
@@ -693,7 +693,7 @@ write_handlers <span style="color: #666666">=</span> {}
           <div class="slide">
               <header><h1>geventで多重化</h1></header>
               
-                  <section><p><strong>ブロッキングと似たコードだが、OSスレッドは1つ</strong></p>
+                  <section><p><strong>シングルスレッドなのにブロッキングしてる</strong></p>
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">gevent.server</span> <span style="color: #008000; font-weight: bold">import</span> StreamServer
 
 <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handler</span>(sock, addr):
@@ -715,6 +715,11 @@ write_handlers <span style="color: #666666">=</span> {}
 </pre></div>
 </pre>
 </section>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>仕組み</h1></header>
               
           </div>
         
@@ -773,7 +778,7 @@ f1 3
           <div class="slide">
               <header><h1>gevent.core</h1></header>
               
-                  <section><p>イベントループ</p>
+                  <section><p>libev ラッパー</p>
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.core</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">time</span>
 
@@ -893,82 +898,12 @@ hub<span style="color: #666666">.</span>switch()
           </div>
         
           <div class="slide">
-              <header><h1>...</h1></header>
-              
-          </div>
-        
-          <div class="slide">
-              <header><h1>todo</h1></header>
+              <header><h1>いつ使うべきか</h1></header>
               
           </div>
         
           <div class="slide">
               <header><h1>...</h1></header>
-              
-          </div>
-        
-          <div class="slide">
-              <header><h1>...</h1></header>
-              
-          </div>
-        
-          <div class="slide">
-              <header><h1>gevent</h1></header>
-              
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-    fd, <span style="border: 1px solid #FF0000">イベント</span> <span style="color: #666666">=</span> <span style="border: 1px solid #FF0000">イベントを待つ</span>()
-    greenlets[fd]<span style="color: #666666">.</span>switch()
-</pre></div>
-</pre>
-</section>
-              
-          </div>
-        
-          <div class="slide">
-              <header><h1>イベントドリブンプログラミング</h1></header>
-              
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> ioloop
-
-<span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
-    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock, loop<span style="color: #666666">=</span><span style="color: #008000">None</span>):
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop <span style="color: #666666">=</span> loop <span style="color: #AA22FF; font-weight: bold">or</span> ioloop<span style="color: #666666">.</span>IOLoop<span style="color: #666666">.</span>instance()
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #BA2121">&#39;&#39;</span>
-        loop<span style="color: #666666">.</span>add_handler(sock<span style="color: #666666">.</span>fileno(), <span style="color: #008000">self</span><span style="color: #666666">.</span>handle, loop<span style="color: #666666">.</span>READ)
-
-    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handle</span>(<span style="color: #008000">self</span>, fd, event):
-        <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ:
-            <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">+=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024**2</span>)
-
-        <span style="color: #008000; font-weight: bold">if</span> event <span style="color: #666666">&</span>amp; <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE:
-            sent <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock<span style="color: #666666">.</span>send(<span style="color: #008000">self</span><span style="color: #666666">.</span>_buf)
-            <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf[sent:]
-
-        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf:
-            loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ<span style="color: #666666">|</span><span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>WRITE)
-        <span style="color: #008000; font-weight: bold">else</span>:
-            loop<span style="color: #666666">.</span>update_handler(fd, <span style="color: #008000">self</span><span style="color: #666666">.</span>_loop<span style="color: #666666">.</span>READ)
-</pre></div>
-</pre>
-</section>
-              
-          </div>
-        
-          <div class="slide">
-              <header><h1>非イベントドリブンプログラミング</h1></header>
-              
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
-    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>_sock <span style="color: #666666">=</span> sock
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>_buf <span style="color: #666666">=</span> 
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>_reader <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>read)
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>_writer <span style="color: #666666">=</span> threading<span style="color: #666666">.</span>Thread(<span style="color: #008000">self</span><span style="color: #666666">.</span>write)
-    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">read</span>(<span style="color: #008000">self</span>):
-        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
-            <span style="color: #008000">self</span>
-</pre></div>
-</pre>
-</section>
               
           </div>
         

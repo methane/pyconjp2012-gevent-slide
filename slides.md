@@ -14,13 +14,13 @@ msgpack-python
 
 #Summary
 
-- <big>gevent って何?</big>
-- <big>どう使うの?</big>
-- <big>他の方法と比べてどうなの?</big>
+- <big>目的</big>
+- <big>仕組み</big>
+- <big>どんな場面で使うべきか</big>
 
 ---
 
-#gevent って何?
+#目的
 
 ---
 
@@ -39,7 +39,7 @@ msgpack-python
 
 ---
 
-# IO多重化
+#IO多重化
 
 複数のIO処理を並行に行う.
 
@@ -273,7 +273,7 @@ IO待ちのためにスレッドを止める(ブロック)
 
 ---
 
-#どうなってんの？
+#仕組み
 
 ---
 
@@ -323,7 +323,7 @@ greenlet.switch() で明示的にスレッドを切り替える
 ---
 
 #gevent.core
-イベントループ
+libev ラッパー
 
     !python
     import gevent.core
@@ -426,70 +426,11 @@ greenlet.switch() で明示的にスレッドを切り替える
 
 ---
 
-#...
-
----
-
-#todo
+#いつ使うべきか
 
 ---
 
 #...
-
----
-
-#...
-
----
-# gevent
-
-    !python
-    while True:
-        fd, イベント = イベントを待つ()
-        greenlets[fd].switch()
-
----
-
-# イベントドリブンプログラミング
-
-    !python
-    from tornado import ioloop
-    
-    class EchoHandler(object):
-        def __init__(self, sock, loop=None):
-            self._sock = sock
-            self._loop = loop or ioloop.IOLoop.instance()
-            self._buf = ''
-            loop.add_handler(sock.fileno(), self.handle, loop.READ)
-
-        def handle(self, fd, event):
-            if event & self._loop.READ:
-                self._buf += self._sock.recv(1024**2)
-                
-            if event & self._loop.WRITE:
-                sent = self._sock.send(self._buf)
-                self._buf = self._buf[sent:]
-                
-            if self._buf:
-                loop.update_handler(fd, self._loop.READ|self._loop.WRITE)
-            else:
-                loop.update_handler(fd, self._loop.READ)
-
----
-
-# 非イベントドリブンプログラミング
-
-    !python
-
-    class EchoHandler(object):
-        def __init__(self, sock):
-            self._sock = sock
-            self._buf = 
-            self._reader = threading.Thread(self.read)
-            self._writer = threading.Thread(self.write)
-        def read(self):
-            while True:
-                self
 
 ---
 
