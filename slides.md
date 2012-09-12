@@ -60,6 +60,7 @@ IO待ちのためにスレッドを止める(ブロック)
 ---
 
 #IO多重化なし
+**1クライアントとしか通信できない**
 
     !python
     import socket
@@ -84,11 +85,9 @@ IO待ちのためにスレッドを止める(ブロック)
     if __name__ == '__main__':
         serve(('0.0.0.0', 4000))
 
-**1クライアントとしか通信できない**
-
 ---
 
-#スレッド
+#スレッドでIO多重化
 
     !python
     import socket, threading
@@ -250,6 +249,141 @@ IO待ちのためにスレッドを止める(ブロック)
 ---
 
 #geventで多重化
+**ブロッキングと似たコードだが、OSスレッドは1つ**
+
+    !python
+    from gevent.server import StreamServer
+
+    def handler(sock, addr):
+        try:
+            while 1:
+                buf = sock.recv(4096)
+                if not buf:
+                    return
+                sock.sendall(buf)
+        finally:
+            sock.close()
+
+    def main(addr):
+        server = StreamServer(addr, handler, backlog=1024)
+        server.serve_forever()
+
+    if __name__ == '__main__':
+        main(('', 4000))
+
+---
+
+#greenlet
+
+並行プログラミングのための軽量スレッド
+
+##高効率
+- スレッドごとに大きなスタックエリアを取らない
+- スイッチのオーバーヘッドが軽い
+- 高負荷時のスループット低下が無い
+
+##協調型(cooperative)
+- 勝手にスイッチしない(スレッドセーフに書きやすい)
+
+##ユーザーランド
+- ブロックするシステムコールを発行すると全スレッドが止まる
+
+---
+
+#greenlet
+greenlet.switch() で明示的にスレッドを切り替える
+
+    !python
+    import greenlet
+    def f1():
+        print 'f1', 1;    g2.switch()
+        print 'f1', 2;    g2.switch()
+        print 'f1', 3
+
+    def f2():
+        print 'f2', 1;    g1.switch()
+        print 'f2', 2;    g1.switch()
+
+    g1 = greenlet.greenlet(f1)
+    g2 = greenlet.greenlet(f2)
+    g1.switch()
+
+実行結果:
+
+    f1 1
+    f2 1
+    f1 2
+    f2 2
+    f1 3
+
+---
+
+#gevent.core
+イベントループ
+
+    !python
+    import gevent.core
+    import time
+
+    loop = gevent.core.loop()
+
+    def callback():
+        print time.time()
+
+    timer = loop.timer(1.0, 1.0) # 繰り返しタイマーイベント
+    timer.start(callback)
+    loop.run()
+
+    # 1347446334.99
+    # 1347446335.99
+    # 1347446336.99
+    # 1347446337.99
+    # ...
+
+---
+
+#gevent.hub
+イベントループと greenlet を繋げる greenlet
+
+    !python
+    import gevent.core, greenlet, time
+
+    loop = gevent.core.loop()
+    hub = greenlet.greenlet(loop.run)     # gevent.get_hub() の簡易版
+
+    def sleep(seconds):    # gevent.sleep() の簡易版
+        timer = loop.timer(seconds) # ワンショットタイマーイベント
+        timer.start(greenlet.getcurrent().switch)
+        hub.switch()
+
+    def sleeper():
+        for _ in range(4):
+            print time.time()
+            sleep(1)    # greenlet 上でブロックする関数
+
+    sleeper()
+    hub.switch()
+
+    # 1347448193.7
+    # 1347448194.7
+    # 1347448195.71
+    # 1347448196.71
+
+---
+
+#gevent.*
+
+- gevent.thread -- thread の置き換え
+- gevent.socket -- socket の置き換え
+- gevent.select -- select の置き換え
+- gevent.queue -- Queue の置き換え
+- gevent.lock -- threading 内のロックの置き換え
+- gevent.pywsgi -- wsgi サーバー
+- gevent.monkey -- モンキーパッチ
+
+---
+
+#モンキーパッチ
 
     !python
     import gevent.monkey; gevent.monkey.patch_all()
@@ -275,23 +409,20 @@ IO待ちのためにスレッドを止める(ブロック)
 
     if __name__ == '__main__':
         serve(('0.0.0.0', 4000))
----
-
-#<strong>gevent.monkey.patch_all()</strong><br/> するだけ！
 
 ---
 
-#greenlet
+# gevent とは何か
+- libev の Python インターフェース (core)
+- イベントコールバックを greenlet のブロックに置き換える (hub)
+- 標準ライブラリと互換性の高いモジュール
+- モンキーパッチで標準ライブラリを入れ替える
+- tcpserver, wsgiserver, 名前解決などのネットワークライブラリ
+- その他 pool, Event, AsyncResult などのライブラリ
 
-並行プログラミングのための軽量スレッド
+---
 
-##高効率
-- スレッドごとに大きなスタックエリアを取らない
-- スイッチのオーバーヘッドが軽い
-- 高負荷時のスループット低下が無い
-
-##協調型(cooperative)
-- 勝手にスイッチしない(スレッドセーフに書きやすい)
+#...
 
 ---
 
