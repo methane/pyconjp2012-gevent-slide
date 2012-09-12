@@ -16,7 +16,7 @@ msgpack-python
 
 - <big>目的</big>
 - <big>仕組み</big>
-- <big>どんな場面で使うべきか</big>
+- <big>特徴</big>
 
 ---
 
@@ -297,20 +297,28 @@ IO待ちのためにスレッドを止める(ブロック)
 #greenlet
 greenlet.switch() で明示的にスレッドを切り替える
 
+$$$$
+
     !python
     import greenlet
     def f1():
-        print 'f1', 1;    g2.switch()
-        print 'f1', 2;    g2.switch()
+        print 'f1', 1
+        g2.switch()
+        print 'f1', 2
+        g2.switch()
         print 'f1', 3
 
     def f2():
-        print 'f2', 1;    g1.switch()
-        print 'f2', 2;    g1.switch()
+        print 'f2', 1
+        g1.switch()
+        print 'f2', 2
+        g1.switch()
 
     g1 = greenlet.greenlet(f1)
     g2 = greenlet.greenlet(f2)
     g1.switch()
+
+$$$$
 
 実行結果:
 
@@ -325,6 +333,8 @@ greenlet.switch() で明示的にスレッドを切り替える
 #gevent.core
 libev ラッパー
 
+$$$$
+
     !python
     import gevent.core
     import time
@@ -333,45 +343,61 @@ libev ラッパー
 
     def callback():
         print time.time()
-
-    timer = loop.timer(1.0, 1.0) # 繰り返しタイマーイベント
+        
+    # 繰り返しタイマーイベント
+    timer = loop.timer(1.0, 1.0)
     timer.start(callback)
     loop.run()
 
-    # 1347446334.99
-    # 1347446335.99
-    # 1347446336.99
-    # 1347446337.99
-    # ...
+$$$$
+
+実行結果:
+
+    1347446334.99
+    1347446335.99
+    1347446336.99
+    1347446337.99
+    ...
 
 ---
 
 #gevent.hub
 イベントループと greenlet を繋げる greenlet
 
+$$$$
+
     !python
     import gevent.core, greenlet, time
-
+    
+    # gevent.get_hub() の簡易版
     loop = gevent.core.loop()
-    hub = greenlet.greenlet(loop.run)     # gevent.get_hub() の簡易版
+    hub = greenlet.greenlet(loop.run)
 
-    def sleep(seconds):    # gevent.sleep() の簡易版
-        timer = loop.timer(seconds) # ワンショットタイマーイベント
+    # gevent.sleep() の簡易版
+    def sleep(seconds):
+        timer = loop.timer(seconds)
+        # コールバックで現在の greenlet に switch させる
         timer.start(greenlet.getcurrent().switch)
+        # hub に switch してイベントループにもどる
         hub.switch()
 
     def sleeper():
         for _ in range(4):
             print time.time()
-            sleep(1)    # greenlet 上でブロックする関数
+            # ブロックする関数として実行可能
+            sleep(1)
 
     sleeper()
     hub.switch()
 
-    # 1347448193.7
-    # 1347448194.7
-    # 1347448195.71
-    # 1347448196.71
+$$$$
+
+実行結果:
+
+    1347448193.7
+    1347448194.7
+    1347448195.71
+    1347448196.71
 
 ---
 
@@ -426,7 +452,7 @@ libev ラッパー
 
 ---
 
-#いつ使うべきか
+#特徴
 
 ---
 

@@ -91,7 +91,17 @@
           -webkit-border-bottom-left-radius: 20px;
         }
 
+        div.left, div.right {
+            position: absolute;
+            width: 45%;
+        }
+        div.top { padding-bottom: 20px; }
+        div.left { left: 20px; }
+        div.right { right: 20px; }
+
         div.slide p {
+          margin-top: 1px;
+          margin-bottom: 1px;
           font-size: 32px;
         }
 
@@ -185,6 +195,7 @@
         pre {
           font-size: 18px;
           font-family: Monaco, Courier, monospace;
+          margin: 5px 0px 0px 10px;
         }
 
         ul {
@@ -421,7 +432,15 @@
           <div class="slide">
               <header>{{ slide.header }}</header>
               {% if slide.content %}
+                {% if slide.left %}
+                  <section>
+                  <div class="top">{{ slide.content }}</div>
+                  <div class="left">{{ slide.left }}</div>
+                  <div class="right">{{ slide.right }}</div>
+                  </section>
+                {% else %}
                   <section>{{ slide.content }}</section>
+                {% endif %}
               {% endif %}
           </div>
         {% endfor %}

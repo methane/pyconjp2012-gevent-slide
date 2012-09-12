@@ -41,7 +41,10 @@ def render():
 
                 content = before_code + pretty_code + after_code
 
-        slides.append({'header': header, 'content': content})
+        left = right = ''
+        if '<p>$$$$</p>' in content:
+            content, left, right = content.split('<p>$$$$</p>')
+        slides.append({'header': header, 'content': content, 'left':left, 'right':right})
 
     template = jinja2.Template(open('base.html').read())
     return template.render(locals())
