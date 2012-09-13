@@ -667,7 +667,7 @@ Gevent は今までと同じプログラムの書き方ができ、既存のラ�
 #Gevent を使うチャンス
 
 * WebSocket対応
-* Coment (long polling) 対応
+* Comet (long polling) 対応
 * Streaming API 対応
 * その他、アプリの機能の一部として大量接続が必要になるケース.
 
