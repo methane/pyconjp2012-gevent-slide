@@ -43,6 +43,12 @@ class EchoHandler(object):
         self.sock = sock
         self.buf = []
         read_handlers[sock.fileno()] = self.on_readable
+    
+    def _update(self):
+        if self.buf:
+            write_handlers[self.sock.fileno()] = self.on_writable
+        else:
+            write_handlers.pop(self.sock.fileno(), None)
 
     def close(self):
         fd = self.sock.fileno()
@@ -60,8 +66,7 @@ class EchoHandler(object):
                     return
                 self.buf.append(data)
         finally:
-            if self.buf:
-                write_handlers[self.sock.fileno()] = self.on_writable
+            self._update()
 
     def on_writable(self):
         try:
@@ -74,8 +79,7 @@ class EchoHandler(object):
                 else:
                     self.buf[0] = data
         finally:
-            if self.buf:
-                write_handlers[self.sock.fileno()] = self.on_writable
+            self._update()
                 
 if __name__ == '__main__':
     serve(('0.0.0.0', 4000))

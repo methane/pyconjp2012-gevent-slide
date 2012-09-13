@@ -24,7 +24,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>gevent</title>
+    <title>Gevent</title>
     <style type = "text/css">
         body {
           background: #778;
@@ -91,6 +91,14 @@
           -webkit-border-bottom-left-radius: 20px;
         }
 
+        div.left, div.right {
+            position: absolute;
+            width: 45%;
+        }
+        div.top { padding-bottom: 20px; }
+        div.left { left: 20px; }
+        div.right { right: 20px; }
+
         div.slide p {
           margin-top: 1px;
           margin-bottom: 1px;
@@ -148,10 +156,8 @@
 
         h1 {
           display: inline;
-          font-size: 56px;
+          font-size: 50px;
           font-weight: normal;
-          padding: 0;
-          margin: 0;
         }
 
         h2 {
@@ -418,29 +424,38 @@
     <div class="presentation">
       <div class="slides">
         <div class="slide">
-            <section class="title"><p>gevent</p>
+            <section class="title"><p>Gevent</p>
 </section>
         </div>
         
           <div class="slide">
               <header><h1>お前誰よ</h1></header>
               
+                
                   <section><p>稲田 直哉 (@methane)</p>
 <p>KLab株式会社</p>
-<p>msgpack-python</p>
+<ul>
+<li>msgpack-python</li>
+<li>エキスパート Python プログラミング</li>
+<li>これから Python 3 のコアな本を書く予定</li>
+</ul>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>Summary</h1></header>
               
+                
                   <section><ul>
-<li><big>目的</big></li>
-<li><big>仕組み</big></li>
-<li><big>どんな場面で使うべきか</big></li>
+<li><big>Gevent の目的</big></li>
+<li><big>Gevent の仕組み</big></li>
+<li><big>Gevent の特徴</big></li>
+<li><big>Gevent を使おう</big></li>
 </ul>
 </section>
+                
               
           </div>
         
@@ -452,6 +467,7 @@
           <div class="slide">
               <header><h1>gevent = libev x greenlet</h1></header>
               
+                
                   <section><h2>libev</h2>
 <p>クロスプラットフォームな
 イベントドリブンプログラミング
@@ -461,20 +477,24 @@
 <h2>gevent</h2>
 <p>2つを組み合わせて <strong>簡単かつ効率のいいIO多重化</strong> を実現</p>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>IO多重化</h1></header>
               
-                  <section><p>複数のIO処理を並行に行う.</p>
-<h2>blocking + thread</h2>
-<p>並行処理のためにスレッドを使う.</p>
-<p>IO待ちのためにスレッドを止める(ブロック)</p>
-<h2>nonblocking + event driven</h2>
-<p>複数のIO待ちをまとめて監視 (select, epoll, kqueue)</p>
-<p>実行可能になったIOを処理する.</p>
+                
+                  <section><p>複数のIO処理を並行に扱うこと.</p>
+<h2>blocking IO</h2>
+<p>IOをすぐに実行できない場合は、そのスレッドを止めて待たせる.</p>
+<p>スレッドを複数使うことで並行処理が可能.</p>
+<h2>nonblocking IO</h2>
+<p>IOをすぐに実行できない場合は、エラーを返す.</p>
+<p>複数のIO待ちをまとめて待つ.</p>
+<p>実行可能になったIOを処理する <strong>イベントドリブン</strong> プログラム.</p>
 </section>
+                
               
           </div>
         
@@ -486,6 +506,7 @@
           <div class="slide">
               <header><h1>IO多重化なし</h1></header>
               
+                
                   <section><p><strong>1クライアントとしか通信できない</strong></p>
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span>
 
@@ -511,12 +532,14 @@
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>スレッドでIO多重化</h1></header>
               
+                
                   <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">threading</span>
 
 <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
@@ -542,13 +565,16 @@
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>nonblocking + select (1)</h1></header>
+              <header><h1>nonblocking + select で多重化 (1)</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">select</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">errno</span>
+                
+                  <section><p>イベントループ</p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">select</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">errno</span>
 
 read_handlers <span style="color: #666666">=</span> {}
 write_handlers <span style="color: #666666">=</span> {}
@@ -574,13 +600,16 @@ write_handlers <span style="color: #666666">=</span> {}
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>nonblocking + select (2)</h1></header>
+              <header><h1>nonblocking + select で多重化 (2)</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">ServerHandler</span>(<span style="color: #008000">object</span>):
+                
+                  <section><p>サーバーの起動と新規接続の受けつけ</p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">ServerHandler</span>(<span style="color: #008000">object</span>):
     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
         sock<span style="color: #666666">.</span>setblocking(<span style="color: #666666">0</span>)
         <span style="color: #008000">self</span><span style="color: #666666">.</span>sock <span style="color: #666666">=</span> sock
@@ -605,12 +634,14 @@ write_handlers <span style="color: #666666">=</span> {}
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>nonblocking + select (3)</h1></header>
+              <header><h1>nonblocking + select で多重化 (3)</h1></header>
               
+                
                   <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoHandler</span>(<span style="color: #008000">object</span>):
     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">__init__</span>(<span style="color: #008000">self</span>, sock):
         sock<span style="color: #666666">.</span>setblocking(<span style="color: #666666">0</span>)
@@ -627,18 +658,27 @@ write_handlers <span style="color: #666666">=</span> {}
                     <span style="color: #008000; font-weight: bold">return</span>
                 <span style="color: #008000">self</span><span style="color: #666666">.</span>buf<span style="color: #666666">.</span>append(data)
         <span style="color: #008000; font-weight: bold">finally</span>:
-            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf:
-                write_handlers[<span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno()] <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>on_writable
+            <span style="color: #008000">self</span><span style="color: #666666">.</span>_update()
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">_update</span>(<span style="color: #008000">self</span>):
+        <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf:
+            write_handlers[<span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno()] <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>on_writable
+        <span style="color: #008000; font-weight: bold">else</span>:
+            write_handlers<span style="color: #666666">.</span>pop(<span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno(), <span style="color: #008000">None</span>)
+    <span style="color: #408080; font-style: italic">#...</span>
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>nonblocking + select(4)</h1></header>
+              <header><h1>nonblocking + select で多重化 (4)</h1></header>
               
-                  <section><pre><div class="highlight"><pre style="line-height: 125%">    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_writable</span>(<span style="color: #008000">self</span>):
+                
+                  <section><pre><div class="highlight"><pre style="line-height: 125%">    <span style="color: #408080; font-style: italic">#...</span>
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_writable</span>(<span style="color: #008000">self</span>):
         <span style="color: #008000; font-weight: bold">try</span>:
             <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf:
                 data <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf[<span style="color: #666666">0</span>]
@@ -649,8 +689,7 @@ write_handlers <span style="color: #666666">=</span> {}
                 <span style="color: #008000; font-weight: bold">else</span>:
                     <span style="color: #008000">self</span><span style="color: #666666">.</span>buf[<span style="color: #666666">0</span>] <span style="color: #666666">=</span> data
         <span style="color: #008000; font-weight: bold">finally</span>:
-            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>buf:
-                write_handlers[<span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno()] <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>on_writable
+            <span style="color: #008000">self</span><span style="color: #666666">.</span>_update()
 
     <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">close</span>(<span style="color: #008000">self</span>):
         fd <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>fileno()
@@ -661,13 +700,16 @@ write_handlers <span style="color: #666666">=</span> {}
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>めんどくさい?</h1></header>
               
-                  <section><p>ほとんどが汎用的な処理<br />フレームワーク化可能</p>
+                
+                  <section><p>ほとんどが汎用的な処理で、フレームワーク化が可能</p>
+<p>イベントループ＋コールバックという構成は基本的に変わらない</p>
 <h2>Tornado</h2>
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> ioloop, iostream
 <span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado.netutil</span> <span style="color: #008000; font-weight: bold">import</span> TCPServer
@@ -687,12 +729,14 @@ write_handlers <span style="color: #666666">=</span> {}
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>geventで多重化</h1></header>
               
+                
                   <section><p><strong>シングルスレッドなのにブロッキングしてる</strong></p>
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">gevent.server</span> <span style="color: #008000; font-weight: bold">import</span> StreamServer
 
@@ -715,6 +759,7 @@ write_handlers <span style="color: #666666">=</span> {}
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
@@ -726,44 +771,32 @@ write_handlers <span style="color: #666666">=</span> {}
           <div class="slide">
               <header><h1>greenlet</h1></header>
               
-                  <section><p>並行プログラミングのための軽量スレッド</p>
-<h2>高効率</h2>
-<ul>
-<li>スレッドごとに大きなスタックエリアを取らない</li>
-<li>スイッチのオーバーヘッドが軽い</li>
-<li>高負荷時のスループット低下が無い</li>
-</ul>
-<h2>協調型(cooperative)</h2>
-<ul>
-<li>勝手にスイッチしない(スレッドセーフに書きやすい)</li>
-</ul>
-<h2>ユーザーランド</h2>
-<ul>
-<li>ブロックするシステムコールを発行すると全スレッドが止まる</li>
-</ul>
-</section>
-              
-          </div>
-        
-          <div class="slide">
-              <header><h1>greenlet</h1></header>
-              
-                  <section><p>greenlet.switch() で明示的にスレッドを切り替える</p>
+                
+                  <section>
+                  <div class="top"><p>明示的に切り替えが必要な軽量スレッド(コルーチン)</p>
+</div>
+                  <div class="left">
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">greenlet</span>
 <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">f1</span>():
-    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">1</span>;    g2<span style="color: #666666">.</span>switch()
-    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">2</span>;    g2<span style="color: #666666">.</span>switch()
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">1</span>
+    g2<span style="color: #666666">.</span>switch()
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">2</span>
+    g2<span style="color: #666666">.</span>switch()
     <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">3</span>
 
 <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">f2</span>():
-    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f2&#39;</span>, <span style="color: #666666">1</span>;    g1<span style="color: #666666">.</span>switch()
-    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f2&#39;</span>, <span style="color: #666666">2</span>;    g1<span style="color: #666666">.</span>switch()
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f2&#39;</span>, <span style="color: #666666">1</span>
+    g1<span style="color: #666666">.</span>switch()
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f2&#39;</span>, <span style="color: #666666">2</span>
+    g1<span style="color: #666666">.</span>switch()
 
 g1 <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(f1)
 g2 <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(f2)
 g1<span style="color: #666666">.</span>switch()
 </pre></div>
 </pre>
+</div>
+                  <div class="right">
 <p>実行結果:</p>
 <pre><code>f1 1
 f2 1
@@ -771,14 +804,42 @@ f1 2
 f2 2
 f1 3
 </code></pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Greenlet vs Thread</h1></header>
+              
+                
+                  <section><ul>
+<li>スレッドごとに大きなスタックエリアを取らない</li>
+<li>スイッチのオーバーヘッドが軽い</li>
+<li>高負荷時のスループット低下が無い</li>
+<li>
+<p>勝手にスイッチしない(スレッドセーフに書きやすい)</p>
+</li>
+<li>
+<p><strong>ブロックするシステムコールを実行すると、ほかのスレッドに切り替えることができない</strong></p>
+</li>
+<li>マルチコアを活かせない</li>
+</ul>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>gevent.core</h1></header>
               
-                  <section><p>libev ラッパー</p>
+                
+                  <section>
+                  <div class="top"><p>libev ラッパー</p>
+<p>イベントループを抽象化する.</p>
+</div>
+                  <div class="left">
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.core</span>
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">time</span>
 
@@ -787,56 +848,77 @@ loop <span style="color: #666666">=</span> gevent<span style="color: #666666">.<
 <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">callback</span>():
     <span style="color: #008000; font-weight: bold">print</span> time<span style="color: #666666">.</span>time()
 
-timer <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>timer(<span style="color: #666666">1.0</span>, <span style="color: #666666">1.0</span>) <span style="color: #408080; font-style: italic"># 繰り返しタイマーイベント</span>
+<span style="color: #408080; font-style: italic"># 繰り返しタイマーイベント</span>
+timer <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>timer(<span style="color: #666666">1.0</span>, <span style="color: #666666">1.0</span>)
 timer<span style="color: #666666">.</span>start(callback)
 loop<span style="color: #666666">.</span>run()
-
-<span style="color: #408080; font-style: italic"># 1347446334.99</span>
-<span style="color: #408080; font-style: italic"># 1347446335.99</span>
-<span style="color: #408080; font-style: italic"># 1347446336.99</span>
-<span style="color: #408080; font-style: italic"># 1347446337.99</span>
-<span style="color: #408080; font-style: italic"># ...</span>
 </pre></div>
 </pre>
-</section>
+</div>
+                  <div class="right">
+<p>実行結果:</p>
+<pre><code>1347446334.99
+1347446335.99
+1347446336.99
+1347446337.99
+...
+</code></pre>
+</div>
+                  </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>gevent.hub</h1></header>
               
-                  <section><p>イベントループと greenlet を繋げる greenlet</p>
+                
+                  <section>
+                  <div class="top"><p>イベントループと greenlet を繋げる greenlet</p>
+</div>
+                  <div class="left">
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.core</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">greenlet</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">time</span>
 
+<span style="color: #408080; font-style: italic"># hub = gevent.get_hub() の簡易版</span>
 loop <span style="color: #666666">=</span> gevent<span style="color: #666666">.</span>core<span style="color: #666666">.</span>loop()
-hub <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(loop<span style="color: #666666">.</span>run)     <span style="color: #408080; font-style: italic"># gevent.get_hub() の簡易版</span>
+hub <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(loop<span style="color: #666666">.</span>run)
 
-<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">sleep</span>(seconds):    <span style="color: #408080; font-style: italic"># gevent.sleep() の簡易版</span>
-    timer <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>timer(seconds) <span style="color: #408080; font-style: italic"># ワンショットタイマーイベント</span>
+<span style="color: #408080; font-style: italic"># gevent.sleep() の簡易版</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">sleep</span>(seconds):
+    timer <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>timer(seconds)
+    <span style="color: #408080; font-style: italic"># コールバックで現在の greenlet に switch させる</span>
     timer<span style="color: #666666">.</span>start(greenlet<span style="color: #666666">.</span>getcurrent()<span style="color: #666666">.</span>switch)
+    <span style="color: #408080; font-style: italic"># hub に switch してイベントループにもどる</span>
     hub<span style="color: #666666">.</span>switch()
 
 <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">sleeper</span>():
     <span style="color: #008000; font-weight: bold">for</span> _ <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">4</span>):
         <span style="color: #008000; font-weight: bold">print</span> time<span style="color: #666666">.</span>time()
-        sleep(<span style="color: #666666">1</span>)    <span style="color: #408080; font-style: italic"># greenlet 上でブロックする関数</span>
+        <span style="color: #408080; font-style: italic"># ブロックする関数として実行可能</span>
+        sleep(<span style="color: #666666">1</span>)
 
 sleeper()
 hub<span style="color: #666666">.</span>switch()
-
-<span style="color: #408080; font-style: italic"># 1347448193.7</span>
-<span style="color: #408080; font-style: italic"># 1347448194.7</span>
-<span style="color: #408080; font-style: italic"># 1347448195.71</span>
-<span style="color: #408080; font-style: italic"># 1347448196.71</span>
 </pre></div>
 </pre>
-</section>
+</div>
+                  <div class="right">
+<p>実行結果:</p>
+<pre><code>1347448193.7
+1347448194.7
+1347448195.71
+1347448196.71
+</code></pre>
+</div>
+                  </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>gevent.*</h1></header>
               
+                
                   <section><ul>
 <li>gevent.thread -- thread の置き換え</li>
 <li>gevent.socket -- socket の置き換え</li>
@@ -847,12 +929,14 @@ hub<span style="color: #666666">.</span>switch()
 <li>gevent.monkey -- モンキーパッチ</li>
 </ul>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>モンキーパッチ</h1></header>
               
+                
                   <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.monkey</span>; gevent<span style="color: #666666">.</span>monkey<span style="color: #666666">.</span>patch_all()
 <span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">threading</span>
 
@@ -879,123 +963,312 @@ hub<span style="color: #666666">.</span>switch()
 </pre></div>
 </pre>
 </section>
+                
               
           </div>
         
           <div class="slide">
               <header><h1>gevent とは何か</h1></header>
               
+                
                   <section><ul>
-<li>libev の Python インターフェース (core)</li>
-<li>イベントコールバックを greenlet のブロックに置き換える (hub)</li>
-<li>標準ライブラリと互換性の高いモジュール</li>
-<li>モンキーパッチで標準ライブラリを入れ替える</li>
+<li>イベントループ (core)</li>
+<li>コールバックから greenlet への橋渡し (hub)</li>
+<li>標準ライブラリと互換性の高いモジュール群</li>
+<li>標準ライブラリを置き換えるモンキーパッチ</li>
 <li>tcpserver, wsgiserver, 名前解決などのネットワークライブラリ</li>
 <li>その他 pool, Event, AsyncResult などのライブラリ</li>
 </ul>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>いつ使うべきか</h1></header>
+              <header><h1>特徴</h1></header>
               
           </div>
         
           <div class="slide">
-              <header><h1>...</h1></header>
+              <header><h1>スレッド vs gevent</h1></header>
               
           </div>
         
           <div class="slide">
-              <header><h1>html5-slides-markdown</h1></header>
+              <header><h1>ベンチマーク</h1></header>
               
-                  <section><p>Generates a slideshow using the slides that power
-<a href="http://apirocks.com/html5/html5.html">the html5-slides presentation</a>.</p>
-<p>A <code>python</code> with the <code>jinja2</code>, <code>markdown</code>, and <code>pygments</code> modules is required.</p>
-<h2>Markdown Formatting Instructions</h2>
-<ul>
-<li>Separate your slides with a horizontal rule (--- in markdown)</li>
-<li>Your first slide (title slide) should not have a heading, only <code>&lt;p&gt;</code>s</li>
-<li>Your other slides should have a heading that renders to an h1 element</li>
-<li>To highlight blocks of code, put !{{lang}} as the first indented line</li>
-<li>See the included slides.md for an example</li>
-</ul>
-<h2>Rendering Instructions</h2>
-<ul>
-<li>Put your markdown content in a file called <code>slides.md</code></li>
-<li>Run <code>python render.py</code></li>
-<li>Enjoy your newly generated <code>presentation.html</code></li>
-</ul>
+                
+                  <section><p>echo サーバーに、1000接続から1000回ずつ、計100万回のメッセージを送受信します.</p>
+<p>厳密に計測したわけではないので傾向をみるだけにしてください。</p>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>Slide #2</h1></header>
+              <header><h1>メモリ使用量(RSS)</h1></header>
               
-                  <section><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean magna tellus,
-fermentum nec venenatis nec, dapibus id metus. Phasellus nulla massa, consequat
-nec tempor et, elementum viverra est. Duis sed nisl in eros adipiscing tempor.</p>
-<h2>Section #1</h2>
-<p>Integer in dignissim ipsum. Integer pretium nulla at elit facilisis eu feugiat
-velit consectetur.</p>
-<h2>Section #2</h2>
-<p>Donec risus tortor, dictum sollicitudin ornare eu, egestas at purus. Cras
-consequat lacus vitae lectus faucibus et molestie nisl gravida. Donec tempor,
-tortor in varius vestibulum, mi odio laoreet magna, in hendrerit nibh neque eu
-eros.</p>
+                
+                  <section><p><br /></p>
+<p>threading:
+34MB</p>
+<p>gevent:
+26MB</p>
+<p>tornado:
+12MB</p>
+<p>select:
+6.1MB</p>
+<p><br />
+アプリケーションを乗せるともっと差が開く可能性があるが、クリティカルな差ではない。</p>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>Middle slide</h1></header>
+              <header><h1>メモリ使用量(VSS)</h1></header>
               
-          </div>
-        
-          <div class="slide">
-              <header><h1>Slide #3</h1></header>
-              
-                  <section><p><strong>Hello Gentlemen</strong></p>
-<ul>
-<li>Mega Man 2</li>
-<li>Mega Man 3</li>
-<li>Spelunky</li>
-<li>Dungeon Crawl Stone Soup</li>
-<li>Etrian Odyssey</li>
-</ul>
-<p><em>Are you prepared to see beyond the veil of reason?</em> - DeceasedCrab</p>
-<ul>
-<li>Black Cascade</li>
-<li>Two Hunters</li>
-<li>Diadem of 12 Stars</li>
-</ul>
+                
+                  <section><p><br /></p>
+<p>threading: <strong>3.9GB</strong></p>
+<p>gevent: 41MB</p>
+<p>tornado: 27MB</p>
+<p>select: 21MB</p>
+<p><br />
+32bit 環境では2GBしかメモリ空間がないので致命的(C10K問題).
+64bit 環境では無視できる。</p>
 </section>
+                
               
           </div>
         
           <div class="slide">
-              <header><h1>Slide #4</h1></header>
+              <header><h1>時間</h1></header>
               
-                  <section><h2>render.py</h2>
-<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">jinja2</span>
-<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">markdown</span>
-
-<span style="color: #008000; font-weight: bold">with</span> <span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;presentation.html&#39;</span>, <span style="color: #BA2121">&#39;w&#39;</span>) <span style="color: #008000; font-weight: bold">as</span> outfile:
-    slides_src <span style="color: #666666">=</span> markdown<span style="color: #666666">.</span>markdown(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;slides.md&#39;</span>)<span style="color: #666666">.</span>read())<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;&lt;hr /&gt;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>)
-
-    slides <span style="color: #666666">=</span> []
-
-    <span style="color: #008000; font-weight: bold">for</span> slide_src <span style="color: #AA22FF; font-weight: bold">in</span> slides_src:
-        header, content <span style="color: #666666">=</span> slide_src<span style="color: #666666">.</span>split(<span style="color: #BA2121">&#39;</span><span style="color: #BB6622; font-weight: bold">\n</span><span style="color: #BA2121">&#39;</span>, <span style="color: #666666">1</span>)
-        slides<span style="color: #666666">.</span>append({<span style="color: #BA2121">&#39;header&#39;</span>: header, <span style="color: #BA2121">&#39;content&#39;</span>: content})
-
-    template <span style="color: #666666">=</span> jinja2<span style="color: #666666">.</span>Template(<span style="color: #008000">open</span>(<span style="color: #BA2121">&#39;base.html&#39;</span>)<span style="color: #666666">.</span>read())
-
-    outfile<span style="color: #666666">.</span>write(template<span style="color: #666666">.</span>render({<span style="color: #BA2121">&#39;slides&#39;</span>: slides}))
+                
+                  <section><p><br />
+threading:
+43sec</p>
+<p>gevent:
+53sec</p>
+<p>tornado:
+43sec</p>
+<p>select:
+25sec</p>
+<p><br />
+OSのスケジューラが十分良いので、むしろオーバーヘッドの分だけ遅くなっている。</p>
+<p>ただし、条件によっては GIL やその他の同期機構のオーバーヘッドが大きくなって逆転する可能性がある。</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>ネイティブスレッド vs Gevent</h1></header>
+              
+                
+                  <section><ul>
+<li>
+<p>たいていのケースではスレッドで十分うまくいく。</p>
+</li>
+<li>
+<p>GIL がよく dis られるが、問題になるケースは限られる。</p>
+</li>
+<li>
+<p>スレッドで何か問題があってからでも Gevent に移行できる。</p>
+</li>
+</ul>
+<p>(スレッドで十分でも、ワクワクするから Gevent を使うというのはアリ:-)</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Tornado vs Gevent</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>複数の処理を繋げる</h1></header>
+              
+                
+                  <section>
+                  <div class="top"><p>イベントドリブンだと処理が細切れになりがち.</p>
+</div>
+                  <div class="left">
+<h2>Gevent</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>(a):
+    b <span style="color: #666666">=</span> spam()
+    <span style="color: #008000; font-weight: bold">return</span> egg(a, b)
 </pre></div>
-</pre></section>
+</pre>
+<h2>Tornado</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">SpameHamEgg</span>(<span style="color: #008000">object</span>):
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">bake</span>(<span style="color: #008000">self</span>, a, callback):
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>a <span style="color: #666666">=</span> a
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>callback <span style="color: #666666">=</span> callback
+        spam(callback<span style="color: #666666">=</span><span style="color: #008000">self</span><span style="color: #666666">.</span>on_spam)
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_spam</span>(<span style="color: #008000">self</span>, b):
+        egg(<span style="color: #008000">self</span><span style="color: #666666">.</span>a, b, callback<span style="color: #666666">=</span><span style="color: #008000">self</span><span style="color: #666666">.</span>callback)
+</pre></div>
+</pre>
+</div>
+                  <div class="right">
+<h2>tornado.gen</h2>
+<p><small>ジェネレータを使ったコルーチン.</small></p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> gen
+<span style="color: #AA22FF">@gen.engine</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>(a):
+    b <span style="color: #666666">=</span> yeild spam()
+    <span style="color: #008000; font-weight: bold">return</span> egg(a, b)
+</pre></div>
+</pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>エラー処理</h1></header>
+              
+                
+                  <section>
+                  <div class="top"><p>callback が呼ばれるのは try-catch ブロックの外.<br />
+イベントドリブンでは try-catch に代わる仕組みが必要。</p>
+</div>
+                  <div class="left">
+<h2>Gevent</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>():
+    <span style="color: #008000; font-weight: bold">try</span>:
+        a <span style="color: #666666">=</span> spam()
+        <span style="color: #008000; font-weight: bold">return</span> egg(a)
+    <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">Exception</span> <span style="color: #008000; font-weight: bold">as</span> e:
+        log<span style="color: #666666">.</span>error(e)
+        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000">None</span>
+</pre></div>
+</pre>
+</div>
+                  <div class="right">
+<h2>Tornado</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">contextlib</span>
+
+<span style="color: #AA22FF">@contextlib.contextmanager</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">log_error</span>():
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">yield</span>
+    <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">Exception</span> <span style="color: #008000; font-weight: bold">as</span> e:
+        log<span style="color: #666666">.</span>error(e)
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>():
+    <span style="color: #008000; font-weight: bold">with</span> StackContext(log_error):
+        spam(callback<span style="color: #666666">=</span>egg)
+</pre></div>
+</pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>ライブラリの対応</h1></header>
+              
+                
+                  <section><h2>Gevent</h2>
+<p>PyMySQL のように、 Python のソケットを使っているライブラリはモンキーパッチで動く可能性が高い。
+追加で Gevent に対応するのも容易.</p>
+<h2>Tornado</h2>
+<p>最初から Tornado 用に設計されてないと対応が難しい.</p>
+<h2>例: PyMongo</h2>
+<p>gevent は monkey patch だけで動く</p>
+<p>Tornado に対応させるために、 Motor がある。(内部では gevent.hub みたいな機能を実装している)</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent vs Tornado</h1></header>
+              
+                
+                  <section><p>Tornado, Twisted, node.js はそれぞれイベントドリブンプログラミングのためのフレームワークとしてとてもおもしろい。
+パフォーマンスについても、 Tornado や Twisted の方が若干軽く、しかも PyPy に対応できる。</p>
+<p>Gevent は今までと同じプログラムの書き方ができ、既存のライブラリを対応させるのも容易なのが特徴。</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent を使おう</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent を使うチャンス</h1></header>
+              
+                
+                  <section><ul>
+<li>WebSocket対応</li>
+<li>Coment (long polling) 対応</li>
+<li>Streaming API 対応</li>
+<li>その他、アプリの機能の一部として大量接続が必要になるケース.</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent を使いたくなったら</h1></header>
+              
+                
+                  <section><ul>
+<li>チュートリアル http://sdiehl.github.com/gevent-tutorial</li>
+<li>チュートリアル(日本語訳) http://methane.github.com/gevent-tutorial-ja</li>
+<li>公式サイト http://gevent.org/</li>
+<li>プロジェクト http://code.google.com/p/gevent/</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent が使えない環境</h1></header>
+              
+                
+                  <section><h2>Python 3</h2>
+<ul>
+<li>必要性は認識されているが、現在は 1.0 の完成に注力されている.</li>
+</ul>
+<h2>PyPy</h2>
+<ul>
+<li>greenlet は CPython 専用。 PyPy に stackless が導入されたのでそれを元に再実装が必要.</li>
+<li>Cython + PyPy の環境は整備されてきているが、性能が出るのはまだまだ先.</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>もっと先へ</h1></header>
+              
+                
+                  <section><p>CPUコア数だけネイティブスレッドを動かし、その上でさらに軽量スレッドを動かすことで、
+マルチコアの性能を活かせる. (N-Mモデル).</p>
+<ul>
+<li>Haskell</li>
+<li>Erlang</li>
+<li>Go (Google)</li>
+<li>Rust (Mozilla)</li>
+</ul></section>
+                
               
           </div>
         

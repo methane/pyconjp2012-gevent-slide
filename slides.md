@@ -1,4 +1,4 @@
-gevent
+Gevent
 
 ---
 
@@ -8,15 +8,18 @@ gevent
 
 KLab株式会社
 
-msgpack-python
+* msgpack-python
+* エキスパート Python プログラミング
+* これから Python 3 のコアな本を書く予定
 
 ---
 
 #Summary
 
-- <big>目的</big>
-- <big>仕組み</big>
-- <big>特徴</big>
+- <big>Gevent の目的</big>
+- <big>Gevent の仕組み</big>
+- <big>Gevent の特徴</big>
+- <big>Gevent を使おう</big>
 
 ---
 
@@ -41,17 +44,19 @@ msgpack-python
 
 #IO多重化
 
-複数のIO処理を並行に行う.
+複数のIO処理を並行に扱うこと.
 
-## blocking + thread
-並行処理のためにスレッドを使う.
+## blocking IO
+IOをすぐに実行できない場合は、そのスレッドを止めて待たせる.
 
-IO待ちのためにスレッドを止める(ブロック)
+スレッドを複数使うことで並行処理が可能.
 
-## nonblocking + event driven
-複数のIO待ちをまとめて監視 (select, epoll, kqueue)
+## nonblocking IO
+IOをすぐに実行できない場合は、エラーを返す.
 
-実行可能になったIOを処理する.
+複数のIO待ちをまとめて待つ.
+
+実行可能になったIOを処理する **イベントドリブン** プログラム.
 
 ---
 
@@ -115,7 +120,8 @@ IO待ちのためにスレッドを止める(ブロック)
 
 ---
 
-#nonblocking + select (1)
+#nonblocking + select で多重化 (1)
+イベントループ
 
     !python
     import socket, select, errno
@@ -144,7 +150,9 @@ IO待ちのためにスレッドを止める(ブロック)
             
 ---
 
-#nonblocking + select (2)
+#nonblocking + select で多重化 (2)
+
+サーバーの起動と新規接続の受けつけ
 
     !python
     class ServerHandler(object):
@@ -172,10 +180,9 @@ IO待ちのためにスレッドを止める(ブロック)
         
 ---
 
-#nonblocking + select (3)
+#nonblocking + select で多重化 (3)
 
     !python
-    
     class EchoHandler(object):
         def __init__(self, sock):
             sock.setblocking(0)
@@ -192,14 +199,21 @@ IO待ちのためにスレッドを止める(ブロック)
                         return
                     self.buf.append(data)
             finally:
-                if self.buf:
-                    write_handlers[self.sock.fileno()] = self.on_writable
+                self._update()
+                
+        def _update(self):
+            if self.buf:
+                write_handlers[self.sock.fileno()] = self.on_writable
+            else:
+                write_handlers.pop(self.sock.fileno(), None)
+        #...
+                
 ---
 
-#nonblocking + select(4)
+#nonblocking + select で多重化 (4)
 
     !python
-    
+        #...
         def on_writable(self):
             try:
                 while self.buf:
@@ -211,8 +225,7 @@ IO待ちのためにスレッドを止める(ブロック)
                     else:
                         self.buf[0] = data
             finally:
-                if self.buf:
-                    write_handlers[self.sock.fileno()] = self.on_writable
+                self._update()
 
         def close(self):
             fd = self.sock.fileno()
@@ -225,7 +238,9 @@ IO待ちのためにスレッドを止める(ブロック)
 
 #めんどくさい?
 
-ほとんどが汎用的な処理<br />フレームワーク化可能
+ほとんどが汎用的な処理で、フレームワーク化が可能
+
+イベントループ＋コールバックという構成は基本的に変わらない
 
 ##Tornado
 
@@ -278,24 +293,7 @@ IO待ちのためにスレッドを止める(ブロック)
 ---
 
 #greenlet
-
-並行プログラミングのための軽量スレッド
-
-##高効率
-- スレッドごとに大きなスタックエリアを取らない
-- スイッチのオーバーヘッドが軽い
-- 高負荷時のスループット低下が無い
-
-##協調型(cooperative)
-- 勝手にスイッチしない(スレッドセーフに書きやすい)
-
-##ユーザーランド
-- ブロックするシステムコールを発行すると全スレッドが止まる
-
----
-
-#greenlet
-greenlet.switch() で明示的にスレッドを切り替える
+明示的に切り替えが必要な軽量スレッド(コルーチン)
 
 $$$$
 
@@ -330,8 +328,22 @@ $$$$
 
 ---
 
+#Greenlet vs Thread
+
+- スレッドごとに大きなスタックエリアを取らない
+- スイッチのオーバーヘッドが軽い
+- 高負荷時のスループット低下が無い
+- 勝手にスイッチしない(スレッドセーフに書きやすい)
+
+- **ブロックするシステムコールを実行すると、ほかのスレッドに切り替えることができない**
+- マルチコアを活かせない
+
+---
+
 #gevent.core
 libev ラッパー
+
+イベントループを抽象化する.
 
 $$$$
 
@@ -369,7 +381,7 @@ $$$$
     !python
     import gevent.core, greenlet, time
     
-    # gevent.get_hub() の簡易版
+    # hub = gevent.get_hub() の簡易版
     loop = gevent.core.loop()
     hub = greenlet.greenlet(loop.run)
 
@@ -443,10 +455,10 @@ $$$$
 ---
 
 # gevent とは何か
-- libev の Python インターフェース (core)
-- イベントコールバックを greenlet のブロックに置き換える (hub)
-- 標準ライブラリと互換性の高いモジュール
-- モンキーパッチで標準ライブラリを入れ替える
+- イベントループ (core)
+- コールバックから greenlet への橋渡し (hub)
+- 標準ライブラリと互換性の高いモジュール群
+- 標準ライブラリを置き換えるモンキーパッチ
 - tcpserver, wsgiserver, 名前解決などのネットワークライブラリ
 - その他 pool, Event, AsyncResult などのライブラリ
 
@@ -456,103 +468,237 @@ $$$$
 
 ---
 
-#...
+#スレッド vs gevent
 
 ---
 
-html5-slides-markdown
-=====================
+#ベンチマーク
+echo サーバーに、1000接続から1000回ずつ、計100万回のメッセージを送受信します.
 
-Generates a slideshow using the slides that power
-[the html5-slides presentation](http://apirocks.com/html5/html5.html).
-
-A `python` with the `jinja2`, `markdown`, and `pygments` modules is required.
-
-Markdown Formatting Instructions
---------------------------------
-
-- Separate your slides with a horizontal rule (--- in markdown)
-- Your first slide (title slide) should not have a heading, only `<p>`s
-- Your other slides should have a heading that renders to an h1 element
-- To highlight blocks of code, put !{{lang}} as the first indented line
-- See the included slides.md for an example
-
-Rendering Instructions
-----------------------
-
-- Put your markdown content in a file called `slides.md`
-- Run `python render.py`
-- Enjoy your newly generated `presentation.html`
+厳密に計測したわけではないので傾向をみるだけにしてください。
 
 ---
 
-Slide #2
-========
+#メモリ使用量(RSS)
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean magna tellus,
-fermentum nec venenatis nec, dapibus id metus. Phasellus nulla massa, consequat
-nec tempor et, elementum viverra est. Duis sed nisl in eros adipiscing tempor.
+<br />
 
-Section #1
-----------
+threading:
+34MB
 
-Integer in dignissim ipsum. Integer pretium nulla at elit facilisis eu feugiat
-velit consectetur.
+gevent:
+26MB
 
-Section #2
-----------
+tornado:
+12MB
 
-Donec risus tortor, dictum sollicitudin ornare eu, egestas at purus. Cras
-consequat lacus vitae lectus faucibus et molestie nisl gravida. Donec tempor,
-tortor in varius vestibulum, mi odio laoreet magna, in hendrerit nibh neque eu
-eros.
+select:
+6.1MB
+
+<br />
+アプリケーションを乗せるともっと差が開く可能性があるが、クリティカルな差ではない。
 
 ---
 
-Middle slide
-============
+#メモリ使用量(VSS)
+
+<br />
+
+threading: **3.9GB**
+
+gevent: 41MB
+
+tornado: 27MB
+
+select: 21MB
+
+<br />
+32bit 環境では2GBしかメモリ空間がないので致命的(C10K問題).
+64bit 環境では無視できる。
 
 ---
 
-Slide #3
-========
+#時間
 
-**Hello Gentlemen**
+<br />
+threading:
+43sec
 
-- Mega Man 2
-- Mega Man 3
-- Spelunky
-- Dungeon Crawl Stone Soup
-- Etrian Odyssey
+gevent:
+53sec
 
-*Are you prepared to see beyond the veil of reason?* - DeceasedCrab
+tornado:
+43sec
 
-- Black Cascade
-- Two Hunters
-- Diadem of 12 Stars
+select:
+25sec
+
+<br />
+OSのスケジューラが十分良いので、むしろオーバーヘッドの分だけ遅くなっている。
+
+ただし、条件によっては GIL やその他の同期機構のオーバーヘッドが大きくなって逆転する可能性がある。
 
 ---
 
-Slide #4
-========
+#ネイティブスレッド vs Gevent
 
-render.py
----------
+- たいていのケースではスレッドで十分うまくいく。
+
+- GIL がよく dis られるが、問題になるケースは限られる。
+
+- スレッドで何か問題があってからでも Gevent に移行できる。
+
+(スレッドで十分でも、ワクワクするから Gevent を使うというのはアリ:-)
+
+---
+
+#Tornado vs Gevent
+
+---
+
+#複数の処理を繋げる
+
+イベントドリブンだと処理が細切れになりがち.
+
+$$$$
+
+##Gevent
 
     !python
-    import jinja2
-    import markdown
+    def spamegg(a):
+        b = spam()
+        return egg(a, b)
 
-    with open('presentation.html', 'w') as outfile:
-        slides_src = markdown.markdown(open('slides.md').read()).split('<hr />\n')
+##Tornado
 
-        slides = []
+    !python
+    class SpameHamEgg(object):
+    
+        def bake(self, a, callback):
+            self.a = a
+            self.callback = callback
+            spam(callback=self.on_spam)
 
-        for slide_src in slides_src:
-            header, content = slide_src.split('\n', 1)
-            slides.append({'header': header, 'content': content})
+        def on_spam(self, b):
+            egg(self.a, b, callback=self.callback)
 
-        template = jinja2.Template(open('base.html').read())
+$$$$
 
-        outfile.write(template.render({'slides': slides}))
+##tornado.gen
 
+<small>ジェネレータを使ったコルーチン.</small>
+
+    !python
+    from tornado import gen
+    @gen.engine
+    def spamegg(a):
+        b = yeild spam()
+        return egg(a, b)
+
+---
+
+#エラー処理
+
+callback が呼ばれるのは try-catch ブロックの外.<br />
+イベントドリブンでは try-catch に代わる仕組みが必要。
+
+$$$$
+
+##Gevent
+
+    !python
+    def spamegg():
+        try:
+            a = spam()
+            return egg(a)
+        except Exception as e:
+            log.error(e)
+            return None
+
+$$$$
+
+##Tornado
+
+    !python
+    import contextlib
+
+    @contextlib.contextmanager
+    def log_error():
+        try:
+            yield
+        except Exception as e:
+            log.error(e)
+
+    def spamegg():
+        with StackContext(log_error):
+            spam(callback=egg)
+
+---
+
+#ライブラリの対応
+
+##Gevent
+PyMySQL のように、 Python のソケットを使っているライブラリはモンキーパッチで動く可能性が高い。
+追加で Gevent に対応するのも容易.
+
+##Tornado
+最初から Tornado 用に設計されてないと対応が難しい.
+
+##例: PyMongo
+gevent は monkey patch だけで動く
+
+Tornado に対応させるために、 Motor がある。(内部では gevent.hub みたいな機能を実装している)
+
+---
+
+#Gevent vs Tornado
+
+Tornado, Twisted, node.js はそれぞれイベントドリブンプログラミングのためのフレームワークとしてとてもおもしろい。
+パフォーマンスについても、 Tornado や Twisted の方が若干軽く、しかも PyPy に対応できる。
+
+Gevent は今までと同じプログラムの書き方ができ、既存のライブラリを対応させるのも容易なのが特徴。
+
+---
+
+#Gevent を使おう
+
+---
+
+#Gevent を使うチャンス
+
+* WebSocket対応
+* Coment (long polling) 対応
+* Streaming API 対応
+* その他、アプリの機能の一部として大量接続が必要になるケース.
+
+---
+
+#Gevent を使いたくなったら
+
+* チュートリアル http://sdiehl.github.com/gevent-tutorial
+* チュートリアル(日本語訳) http://methane.github.com/gevent-tutorial-ja
+* 公式サイト http://gevent.org/
+* プロジェクト http://code.google.com/p/gevent/
+
+---
+
+#Gevent が使えない環境
+
+## Python 3
+* 必要性は認識されているが、現在は 1.0 の完成に注力されている.
+
+## PyPy
+* greenlet は CPython 専用。 PyPy に stackless が導入されたのでそれを元に再実装が必要.
+* Cython + PyPy の環境は整備されてきているが、性能が出るのはまだまだ先.
+
+---
+
+#もっと先へ
+
+CPUコア数だけネイティブスレッドを動かし、その上でさらに軽量スレッドを動かすことで、
+マルチコアの性能を活かせる. (N-Mモデル).
+
+* Haskell
+* Erlang
+* Go (Google)
+* Rust (Mozilla)
