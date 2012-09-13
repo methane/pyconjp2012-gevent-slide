@@ -12,6 +12,8 @@ KLab株式会社
 * エキスパート Python プログラミング
 * これから Python 3 のコアな本を書く予定
 
+<img src='./icon.jpg' style="right: 20px; top: 20px; position: absolute; width:240px; height:240px;">
+
 ---
 
 #Summary
@@ -675,11 +677,13 @@ Gevent は今までと同じプログラムの書き方ができ、既存のラ�
 
 #Gevent を使いたくなったら
 
-* チュートリアル
+* [チュートリアル](http://sdiehl.github.com/gevent-tutorial)
 
     http://sdiehl.github.com/gevent-tutorial
     
-    (日本語訳) http://methane.github.com/gevent-tutorial-ja
+* [日本語訳](http://methane.github.com/gevent-tutorial-ja)
+
+    http://methane.github.com/gevent-tutorial-ja
     
 * 公式サイト
  
