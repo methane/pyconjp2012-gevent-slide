@@ -121,15 +121,14 @@ IOをすぐに実行できない場合は、エラーを返す.
 ---
 
 #nonblocking + select で多重化 (1)
-イベントループ
 
     !python
     import socket, select, errno
 
-    read_handlers = {}
+    read_handlers = {}  # IO待ちとコールバック関数の管理.
     write_handlers = {}
 
-    def call_handlers(handlers, fds):
+    def call_handlers(handlers, fds): # コールバックの呼び出し.
         for fd in fds:
             try:
                 handlers[fd]()
@@ -139,7 +138,7 @@ IOをすぐに実行できない場合は、エラーを返す.
             except KeyError:
                 pass
                 
-    def loop():
+    def loop():  # イベントループ
         while True:
             reads, writes, _ = select.select(
                     read_handlers.keys(),
@@ -654,6 +653,7 @@ Tornado に対応させるために、 Motor がある。(内部では gevent.hu
 #Gevent vs Tornado
 
 Tornado, Twisted, node.js はそれぞれイベントドリブンプログラミングのためのフレームワークとしてとてもおもしろい。
+
 パフォーマンスについても、 Tornado や Twisted の方が若干軽く、しかも PyPy に対応できる。
 
 Gevent は今までと同じプログラムの書き方ができ、既存のライブラリを対応させるのも容易なのが特徴。
@@ -675,10 +675,19 @@ Gevent は今までと同じプログラムの書き方ができ、既存のラ�
 
 #Gevent を使いたくなったら
 
-* チュートリアル http://sdiehl.github.com/gevent-tutorial
-* チュートリアル(日本語訳) http://methane.github.com/gevent-tutorial-ja
-* 公式サイト http://gevent.org/
-* プロジェクト http://code.google.com/p/gevent/
+* チュートリアル
+
+    http://sdiehl.github.com/gevent-tutorial
+    
+    (日本語訳) http://methane.github.com/gevent-tutorial-ja
+    
+* 公式サイト
+ 
+    http://gevent.org/
+  
+* プロジェクト
+
+    http://code.google.com/p/gevent/
 
 ---
 

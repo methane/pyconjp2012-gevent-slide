@@ -100,8 +100,8 @@
         div.right { right: 20px; }
 
         div.slide p {
-          margin-top: 1px;
-          margin-bottom: 1px;
+          margin-top: 10px;
+          margin-bottom: 5px;
           font-size: 32px;
         }
 
@@ -573,13 +573,12 @@
               <header><h1>nonblocking + select で多重化 (1)</h1></header>
               
                 
-                  <section><p>イベントループ</p>
-<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">select</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">errno</span>
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">select</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">errno</span>
 
-read_handlers <span style="color: #666666">=</span> {}
+read_handlers <span style="color: #666666">=</span> {}  <span style="color: #408080; font-style: italic"># IO待ちとコールバック関数の管理.</span>
 write_handlers <span style="color: #666666">=</span> {}
 
-<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">call_handlers</span>(handlers, fds):
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">call_handlers</span>(handlers, fds): <span style="color: #408080; font-style: italic"># コールバックの呼び出し.</span>
     <span style="color: #008000; font-weight: bold">for</span> fd <span style="color: #AA22FF; font-weight: bold">in</span> fds:
         <span style="color: #008000; font-weight: bold">try</span>:
             handlers[fd]()
@@ -589,7 +588,7 @@ write_handlers <span style="color: #666666">=</span> {}
         <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">KeyError</span>:
             <span style="color: #008000; font-weight: bold">pass</span>
 
-<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">loop</span>():
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">loop</span>():  <span style="color: #408080; font-style: italic"># イベントループ</span>
     <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
         reads, writes, _ <span style="color: #666666">=</span> select<span style="color: #666666">.</span>select(
                 read_handlers<span style="color: #666666">.</span>keys(),
@@ -1187,8 +1186,8 @@ OSのスケジューラが十分良いので、むしろオーバーヘッドの
               <header><h1>Gevent vs Tornado</h1></header>
               
                 
-                  <section><p>Tornado, Twisted, node.js はそれぞれイベントドリブンプログラミングのためのフレームワークとしてとてもおもしろい。
-パフォーマンスについても、 Tornado や Twisted の方が若干軽く、しかも PyPy に対応できる。</p>
+                  <section><p>Tornado, Twisted, node.js はそれぞれイベントドリブンプログラミングのためのフレームワークとしてとてもおもしろい。</p>
+<p>パフォーマンスについても、 Tornado や Twisted の方が若干軽く、しかも PyPy に対応できる。</p>
 <p>Gevent は今までと同じプログラムの書き方ができ、既存のライブラリを対応させるのも容易なのが特徴。</p>
 </section>
                 
@@ -1220,10 +1219,19 @@ OSのスケジューラが十分良いので、むしろオーバーヘッドの
               
                 
                   <section><ul>
-<li>チュートリアル http://sdiehl.github.com/gevent-tutorial</li>
-<li>チュートリアル(日本語訳) http://methane.github.com/gevent-tutorial-ja</li>
-<li>公式サイト http://gevent.org/</li>
-<li>プロジェクト http://code.google.com/p/gevent/</li>
+<li>
+<p>チュートリアル</p>
+<p>http://sdiehl.github.com/gevent-tutorial</p>
+<p>(日本語訳) http://methane.github.com/gevent-tutorial-ja</p>
+</li>
+<li>
+<p>公式サイト</p>
+<p>http://gevent.org/</p>
+</li>
+<li>
+<p>プロジェクト</p>
+<p>http://code.google.com/p/gevent/</p>
+</li>
 </ul>
 </section>
                 
