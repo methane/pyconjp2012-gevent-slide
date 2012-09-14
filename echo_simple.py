@@ -1,9 +1,12 @@
 #coding: utf-8
-import gevent.monkey; gevent.monkey.patch_all()
+import sys
+if 'g' in sys.argv:
+    import gevent.monkey; gevent.monkey.patch_all()
 import os
+print os.getpid()
 import socket, threading
 
-print os.getpid()
+from stress import stress
 
 def echo(sock):
     try:
@@ -11,6 +14,7 @@ def echo(sock):
             data = sock.recv(1024) # 受信できるまでブロック
             if not data:
                 break
+            stress()
             sock.sendall(data) # 送信できるまでブロック
     finally:
         sock.close()

@@ -4,61 +4,77 @@ Gevent
 
 #お前誰よ
 
-稲田 直哉 (@methane)
+<img src='./icon.jpg' style="right: 30px; top: 30px; position: absolute; width:240px; height:240px;
+ border-radius:30px; ">
 
-KLab株式会社
+稲田 直哉
 
+* @methane
 * msgpack-python
 * エキスパート Python プログラミング
-* これから Python 3 のコアな本を書く予定
+* これから Python 3 の本を書く
 
-<img src='./icon.jpg' style="right: 20px; top: 20px; position: absolute; width:240px; height:240px;">
+<br />
+KLab株式会社
+
+* スポンサーしてます
+* **We're hiring!**
+
+---
+
+#発表資料
+
+* ソース
+
+    <small>http://github.com/methane/pyconjp2012-gevent-slide</small>
+
+* スライド
+
+    <small>http://methane.github.com/pyconjp2012-gevent-slide</small>
 
 ---
 
 #Summary
 
 - <big>Gevent の目的</big>
-- <big>Gevent の仕組み</big>
 - <big>Gevent の特徴</big>
+- <big>Gevent の仕組み</big>
 - <big>Gevent を使おう</big>
 
 ---
 
-#目的
+#Gevent の目的
+
+<br />
+
+<big>簡単かつ効率のいい **IO多重化** </big>
 
 ---
 
-#gevent = libev x greenlet
-
-##libev
-クロスプラットフォームな
-イベントドリブンプログラミング
-効率のいい **IO多重化** を実現
-
-##greenlet
-軽量スレッド
-
-##gevent
-2つを組み合わせて **簡単かつ効率のいいIO多重化** を実現
-
----
-
-#IO多重化
+#IO多重化とは
 
 複数のIO処理を並行に扱うこと.
 
-## blocking IO
-IOをすぐに実行できない場合は、そのスレッドを止めて待たせる.
+* Webアプリ
+* チャット
+* 複数のファイルの tail
+* たくさんの<s>エロ</s>画像のダウンロード
 
-スレッドを複数使うことで並行処理が可能.
+---
+
+#IO多重化の手段
+
+## blocking IO
+スレッドを止めてIOを待つ
+
+スレッドを複数使うことで多重化
 
 ## nonblocking IO
-IOをすぐに実行できない場合は、エラーを返す.
+IOを待たないでエラーを返す.
 
-複数のIO待ちをまとめて待つ.
+複数のIOをまとめて待つ(selectなど)ことで多重化
 
-実行可能になったIOを処理する **イベントドリブン** プログラム.
+実行可能になったIOに対応する処理を実行する **イベントドリブン** プログラム.
 
 ---
 
@@ -66,7 +82,8 @@ IOをすぐに実行できない場合は、エラーを返す.
 
 ---
 
-#IO多重化なし
+#blocking (多重化なし)
+
 **1クライアントとしか通信できない**
 
     !python
@@ -87,14 +104,15 @@ IOをすぐに実行できない場合は、エラーを返す.
         sock.bind(addr); sock.listen(50)
         while True:
             conn, _ = sock.accept() # 接続されるまでブロック
-            echo(conn) # 接続が終わるまでブロック
+            echo(conn) # 終わるまで帰ってこない
     
-    if __name__ == '__main__':
-        serve(('0.0.0.0', 4000))
+    serve(('0.0.0.0', 4000))
 
 ---
 
-#スレッドでIO多重化
+#blocking with threading
+
+**並行処理したい関数をスレッドで包むだけ**
 
     !python
     import socket, threading
@@ -114,136 +132,42 @@ IOをすぐに実行できない場合は、エラーを返す.
         sock.bind(addr); sock.listen(50)
         while True:
             conn, _ = sock.accept()
-            # クライアントごとにスレッドを立ち上げて並行処理
             threading.Thread(target=echo, args=(conn,)).start()
 
-    if __name__ == '__main__':
-        serve(('0.0.0.0', 4000))
+    serve(('0.0.0.0', 4000))
 
 ---
 
-#nonblocking + select で多重化 (1)
+#nonblocking with select
+
+**かなり面倒**
+
+[<small>echo_select.py</small>](./echo_select.py)
 
     !python
-    import socket, select, errno
-
-    read_handlers = {}  # IO待ちとコールバック関数の管理.
-    write_handlers = {}
-
-    def call_handlers(handlers, fds): # コールバックの呼び出し.
-        for fd in fds:
-            try:
-                handlers[fd]()
-            except IOError as e:
-                if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
-                    continue
-            except KeyError:
-                pass
-                
-    def loop():  # イベントループ
-        while True:
-            reads, writes, _ = select.select(
-                    read_handlers.keys(),
-                    write_handlers.keys(),
-                    [])
-            call_handlers(read_handlers, reads)
-            call_handlers(write_handlers, writes)
-            
----
-
-#nonblocking + select で多重化 (2)
-
-サーバーの起動と新規接続の受けつけ
-
-    !python
-    class ServerHandler(object):
-        def __init__(self, sock):
-            sock.setblocking(0)
-            self.sock = sock
-            read_handlers[sock.fileno()] = self.on_readable
-
+    
+        #...
         def on_readable(self):
             while True:
                 conn, _ = self.sock.accept()
                 EchoHandler(conn)
-
-    def serve(addr):
-        sock = socket.socket()
-        sock.bind(addr)
-        sock.listen(50)
-        ServerHandler(sock)
-        loop()
-    
-    #...
-
-    if __name__ == '__main__':
-        serve(('0.0.0.0', 4000))
-        
----
-
-#nonblocking + select で多重化 (3)
-
-    !python
-    class EchoHandler(object):
-        def __init__(self, sock):
-            sock.setblocking(0)
-            self.sock = sock
-            self.buf = []
-            read_handlers[sock.fileno()] = self.on_readable
-
+        #...
         def on_readable(self):
             try:
-                while True:
-                    data = self.sock.recv(4096)
-                    if not data:
-                        self.close()
-                        return
-                    self.buf.append(data)
+                data = self.sock.recv(4096)
+                if not data:
+                    self.close()
+                    return
+                self.buf.append(data)
             finally:
                 self._update()
-                
-        def _update(self):
-            if self.buf:
-                write_handlers[self.sock.fileno()] = self.on_writable
-            else:
-                write_handlers.pop(self.sock.fileno(), None)
         #...
-                
----
-
-#nonblocking + select で多重化 (4)
-
-    !python
-        #...
-        def on_writable(self):
-            try:
-                while self.buf:
-                    data = self.buf[0]
-                    sent = self.sock.send(data)
-                    data = data[sent:]
-                    if not data:
-                        self.buf.pop(0)
-                    else:
-                        self.buf[0] = data
-            finally:
-                self._update()
-
-        def close(self):
-            fd = self.sock.fileno()
-            read_handlers.pop(fd, None)
-            write_handlers.pop(fd, None)
-            self.sock.close()
-            self.buf = []
 
 ---
 
-#めんどくさい?
+#nonblocking with Tornado
 
-ほとんどが汎用的な処理で、フレームワーク化が可能
-
-イベントループ＋コールバックという構成は基本的に変わらない
-
-##Tornado
+基本はコールバック使ったイベントドリブンのまま。
 
     !python
     from tornado import ioloop, iostream
@@ -251,21 +175,39 @@ IOをすぐに実行できない場合は、エラーを返す.
 
     class EchoServer(TCPServer):
         def handle_stream(self, stream, addr):
-            stream.read_until_close(lambda _: stream.close(),
-                                    stream.write)
+            stream.read_until_close(
+                    lambda _: stream.close(), # 切断時コールバック
+                    stream.write, # データ受信コールバック
+                    )
 
     def serve(addr):
         server = EchoServer()
         server.listen(addr[1], addr[0])
         ioloop.IOLoop.instance().start()
 
-    if __name__ == '__main__':
-        serve(('', 4000))
+    serve(('', 4000))
 
 ---
 
-#geventで多重化
-**シングルスレッドなのにブロッキングしてる**
+#Gevent の特徴
+
+---
+
+#Gevent の特徴
+
+* echoサーバー
+
+* Gevent vs Threading
+
+    * パフォーマンス対決
+
+* Gevent vs Tornado
+
+    * 使いやすさ対決
+
+---
+
+#Gevent で echo サーバー
 
     !python
     from gevent.server import StreamServer
@@ -280,20 +222,312 @@ IOをすぐに実行できない場合は、エラーを返す.
         finally:
             sock.close()
 
-    def main(addr):
+    def serve(addr):
         server = StreamServer(addr, handler, backlog=1024)
         server.serve_forever()
 
-    if __name__ == '__main__':
-        main(('', 4000))
+    serve(('', 4000))
 
 ---
 
-#仕組み
+#**どう見てもblockingなのに、<br />スレッド1つで多重化できる**
 
 ---
 
-#greenlet
+#gevent.monkey.patch_all()
+
+    !python
+    import gevent.monkey; gevent.monkey.patch_all()
+    import socket, threading
+    
+    def echo(sock):
+        try:
+            while True:
+                data = sock.recv(1024) # 受信できるまでブロック
+                if not data:
+                    break
+                sock.sendall(data) # 送信できるまでブロック
+        finally:
+            sock.close()
+
+    def serve(addr):
+        sock = socket.socket()
+        sock.bind(addr); sock.listen(50)
+        while True:
+            conn, _ = sock.accept()
+            threading.Thread(target=echo, args=(conn,)).start()
+            
+    serve(('0.0.0.0', 4000))
+
+---
+
+#**スレッド版のコードが<br />魔法の1行でGevent版に**
+
+---
+
+#Gevent vs Threading<br/><small>パフォーマンス対決</small>
+
+---
+
+#ベンチマーク
+
+echo サーバーに 1000接続から1000回ずつ、
+
+計100万回のメッセージを送受信.
+
+---
+
+#メモリ使用量(RSS)
+
+<br />
+
+threading:
+34MB
+
+gevent:
+26MB
+
+tornado:
+12MB
+
+select:
+6.1MB
+
+---
+
+#仮想メモリ使用量(VSS)
+
+<br />
+
+threading: **3.9GB**
+
+gevent: 41MB
+
+tornado: 27MB
+
+select: 21MB
+
+<br />
+32bit 環境では2GBしかメモリ空間がないので致命的(C10K問題).
+64bit 環境では無視できる。
+
+---
+
+#時間
+
+<br />
+threading:
+43sec
+
+gevent:
+53sec
+
+tornado:
+43sec
+
+select:
+25sec
+
+---
+
+#**Gevent意味あんの？**
+
+---
+
+#ベンチマーク2
+
+2000接続から50回ずつ、計10万回リクエスト
+
+send の手前で負荷をかけてみる
+
+    !python
+    
+    def stress(): # 18.6 ms
+        def rec(n):
+            if n:
+                return rec(n-1)
+        for i in xrange(100):
+            rec(100)
+
+---
+
+#結果
+
+<table>
+<tr>
+<td></td>
+<th>Gevent</th>
+<th>Threading</th>
+</tr>
+<tr>
+<td>RSS</td>
+<td>46.1MB</td>
+<td>210.5MB</td>
+</tr>
+<tr>
+<td>VSS</td>
+<td>46.5MB</td>
+<td>7.9GB</td>
+</tr>
+<tr>
+<td>time</td>
+<td>3m20sec</td>
+<td>10m55sec</td>
+</tr>
+</table>
+
+スレッドのオーバーヘッド:
+
+* 深い関数呼び出し => メモリ使用量が増える
+
+* CPUを使う処理がたくさん並行する
+
+    => 実行時間が増える
+
+---
+
+
+#Gevent vs Threading まとめ
+
+* たいていスレッドで十分
+
+    ワクワクするから Gevent を使うというのはアリ :-)
+
+* マルチコア・マルチスレッド・高負荷のとき
+
+    スレッドのオーバーヘッドが大きい(GIL)場合は、
+    Gevent の方が安定した性能が出る.
+
+* メモリを節約したい場面でも有効
+
+---
+
+#Gevent vs Tornado<br/><small>使いやすさ対決</small>
+
+---
+
+#複数の処理を繋げる
+
+イベントドリブンだと処理が細切れになりがち.
+
+$$$$
+
+##Gevent
+
+    !python
+    def spamegg(a):
+        b = spam()
+        return egg(a, b)
+
+##Tornado
+
+    !python
+    class SpameHamEgg(object):
+    
+        def bake(self, a, callback):
+            self.a = a
+            self.callback = callback
+            spam(callback=self.on_spam)
+
+        def on_spam(self, b):
+            egg(self.a, b, callback=self.callback)
+
+$$$$
+
+##tornado.gen
+
+<small>ジェネレータを使ったコルーチン.</small>
+
+    !python
+    from tornado import gen
+    @gen.engine
+    def spamegg(a):
+        b = yeild spam()
+        return egg(a, b)
+
+---
+
+#エラー処理
+
+callback が呼ばれるのは try-catch ブロックの外.<br />
+イベントドリブンでは try-catch に代わる仕組みが必要。
+
+$$$$
+
+##Gevent
+
+    !python
+    def spamegg():
+        try:
+            a = spam()
+            return egg(a)
+        except Exception as e:
+            log.error(e)
+            return None
+
+$$$$
+
+##Tornado
+
+    !python
+    import contextlib
+
+    @contextlib.contextmanager
+    def log_error():
+        try:
+            yield
+        except Exception as e:
+            log.error(e)
+
+    def spamegg():
+        with StackContext(log_error):
+            spam(callback=egg)
+
+---
+
+#ライブラリの対応
+
+##Gevent
+多くのライブラリがモンキーパッチで動く.
+
+後から Gevent に対応するのも容易.
+
+##Tornado
+最初から Tornado 用に設計されてないと対応が難しい.
+
+##例: PyMongo
+gevent は monkey patch だけで動く
+
+Tornado に対応させるために Motor が作られた。
+(Gevent のような仕組みをTornadoで実現)
+
+---
+
+#Gevent vs Tornado
+
+Tornado, Twisted, node.js はそれぞれイベントドリブンプログラミングのためのフレームワークとしてとてもおもしろい。
+
+<br/>
+パフォーマンスについても、 Tornado や Twisted の方が若干軽く、しかも PyPy に対応できる。
+
+<br/>
+Gevent は **今までと同じプログラムの書き方ができ、<br />既存のライブラリを対応させるのも容易**
+
+---
+
+#Gevent の仕組み
+
+---
+
+#Gevent の仕組み
+
+* Greenlet
+* gevent.core
+* gevent.hub
+
+---
+
+#Greenlet
 明示的に切り替えが必要な軽量スレッド(コルーチン)
 
 $$$$
@@ -303,14 +537,14 @@ $$$$
     def f1():
         print 'f1', 1
         g2.switch()
-        print 'f1', 2
-        g2.switch()
         print 'f1', 3
+        g2.switch()
+        print 'f1', 5
 
     def f2():
-        print 'f2', 1
-        g1.switch()
         print 'f2', 2
+        g1.switch()
+        print 'f2', 4
         g1.switch()
 
     g1 = greenlet.greenlet(f1)
@@ -319,13 +553,13 @@ $$$$
 
 $$$$
 
-実行結果:
+実行結果
 
     f1 1
-    f2 1
-    f1 2
     f2 2
     f1 3
+    f2 4
+    f1 5
 
 ---
 
@@ -423,35 +657,7 @@ $$$$
 - gevent.lock -- threading 内のロックの置き換え
 - gevent.pywsgi -- wsgi サーバー
 - gevent.monkey -- モンキーパッチ
-
----
-
-#モンキーパッチ
-
-    !python
-    import gevent.monkey; gevent.monkey.patch_all()
-    import socket, threading
-    
-    def echo(sock):
-        try:
-            while True:
-                data = sock.recv(1024) # 受信できるまでブロック
-                if not data:
-                    break
-                sock.sendall(data) # 送信できるまでブロック
-        finally:
-            sock.close()
-
-    def serve(addr):
-        sock = socket.socket()
-        sock.bind(addr); sock.listen(50)
-        while True:
-            conn, _ = sock.accept()
-            # クライアントごとにスレッドを立ち上げて並行処理
-            threading.Thread(target=echo, args=(conn,)).start()
-
-    if __name__ == '__main__':
-        serve(('0.0.0.0', 4000))
+- etc...
 
 ---
 
@@ -465,203 +671,6 @@ $$$$
 
 ---
 
-#特徴
-
----
-
-#スレッド vs gevent
-
----
-
-#ベンチマーク
-echo サーバーに、1000接続から1000回ずつ、計100万回のメッセージを送受信します.
-
-厳密に計測したわけではないので傾向をみるだけにしてください。
-
----
-
-#メモリ使用量(RSS)
-
-<br />
-
-threading:
-34MB
-
-gevent:
-26MB
-
-tornado:
-12MB
-
-select:
-6.1MB
-
-<br />
-アプリケーションを乗せるともっと差が開く可能性があるが、クリティカルな差ではない。
-
----
-
-#メモリ使用量(VSS)
-
-<br />
-
-threading: **3.9GB**
-
-gevent: 41MB
-
-tornado: 27MB
-
-select: 21MB
-
-<br />
-32bit 環境では2GBしかメモリ空間がないので致命的(C10K問題).
-64bit 環境では無視できる。
-
----
-
-#時間
-
-<br />
-threading:
-43sec
-
-gevent:
-53sec
-
-tornado:
-43sec
-
-select:
-25sec
-
-<br />
-OSのスケジューラが十分良いので、むしろオーバーヘッドの分だけ遅くなっている。
-
-ただし、条件によっては GIL やその他の同期機構のオーバーヘッドが大きくなって逆転する可能性がある。
-
----
-
-#ネイティブスレッド vs Gevent
-
-たいていのケースではスレッドで十分うまくいく。
-
-GIL がよく dis られるが、問題になるケースは限られる。
-
-スレッドで何か問題があってからでも Gevent に移行できる。
-
-(スレッドで十分でも、ワクワクするから Gevent を使うというのはアリ:-)
-
----
-
-#Tornado vs Gevent
-
----
-
-#複数の処理を繋げる
-
-イベントドリブンだと処理が細切れになりがち.
-
-$$$$
-
-##Gevent
-
-    !python
-    def spamegg(a):
-        b = spam()
-        return egg(a, b)
-
-##Tornado
-
-    !python
-    class SpameHamEgg(object):
-    
-        def bake(self, a, callback):
-            self.a = a
-            self.callback = callback
-            spam(callback=self.on_spam)
-
-        def on_spam(self, b):
-            egg(self.a, b, callback=self.callback)
-
-$$$$
-
-##tornado.gen
-
-<small>ジェネレータを使ったコルーチン.</small>
-
-    !python
-    from tornado import gen
-    @gen.engine
-    def spamegg(a):
-        b = yeild spam()
-        return egg(a, b)
-
----
-
-#エラー処理
-
-callback が呼ばれるのは try-catch ブロックの外.<br />
-イベントドリブンでは try-catch に代わる仕組みが必要。
-
-$$$$
-
-##Gevent
-
-    !python
-    def spamegg():
-        try:
-            a = spam()
-            return egg(a)
-        except Exception as e:
-            log.error(e)
-            return None
-
-$$$$
-
-##Tornado
-
-    !python
-    import contextlib
-
-    @contextlib.contextmanager
-    def log_error():
-        try:
-            yield
-        except Exception as e:
-            log.error(e)
-
-    def spamegg():
-        with StackContext(log_error):
-            spam(callback=egg)
-
----
-
-#ライブラリの対応
-
-##Gevent
-PyMySQL のように、 Python のソケットを使っているライブラリはモンキーパッチで動く可能性が高い。
-追加で Gevent に対応するのも容易.
-
-##Tornado
-最初から Tornado 用に設計されてないと対応が難しい.
-
-##例: PyMongo
-gevent は monkey patch だけで動く
-
-Tornado に対応させるために、 Motor がある。(内部では gevent.hub みたいな機能を実装している)
-
----
-
-#Gevent vs Tornado
-
-Tornado, Twisted, node.js はそれぞれイベントドリブンプログラミングのためのフレームワークとしてとてもおもしろい。
-
-パフォーマンスについても、 Tornado や Twisted の方が若干軽く、しかも PyPy に対応できる。
-
-Gevent は今までと同じプログラムの書き方ができ、既存のライブラリを対応させるのも容易なのが特徴。
-
----
-
 #Gevent を使おう
 
 ---
@@ -672,10 +681,22 @@ Gevent は今までと同じプログラムの書き方ができ、既存のラ�
 * Comet (long polling) 対応
 * Streaming API 対応
 * その他、アプリの機能の一部として大量接続が必要になるケース.
+* その他、メモリを節約したかったりGILに悩んでいるケース.
 
 ---
 
-#Gevent を使いたくなったら
+#Gevent が使えない環境
+
+## Python 3
+* 必要性は認識されているが、現在は 1.0 の完成に注力されている.
+
+## PyPy
+* greenlet は CPython 専用。 PyPy に stackless が導入されたのでそれを元に再実装が必要.
+* Cython + PyPy の環境は整備されてきているが、性能が出るのはまだまだ先.
+
+---
+
+#参考
 
 * [チュートリアル](http://sdiehl.github.com/gevent-tutorial)
 
@@ -695,23 +716,10 @@ Gevent は今までと同じプログラムの書き方ができ、既存のラ�
 
 ---
 
-#Gevent が使えない環境
-
-## Python 3
-* 必要性は認識されているが、現在は 1.0 の完成に注力されている.
-
-## PyPy
-* greenlet は CPython 専用。 PyPy に stackless が導入されたのでそれを元に再実装が必要.
-* Cython + PyPy の環境は整備されてきているが、性能が出るのはまだまだ先.
+#Thanks.
 
 ---
 
-#もっと先へ
+#...
 
-CPUコア数だけネイティブスレッドを動かし、その上でさらに軽量スレッドを動かすことで、
-マルチコアの性能を活かせる. (N-Mモデル).
-
-* Haskell
-* Erlang
-* Go (Google)
-* Rust (Mozilla)
+---

@@ -3,7 +3,7 @@ import time
 
 def main():
     socks = []
-    for _ in xrange(1000):
+    for _ in xrange(2000):
         s = socket.socket()
         s.connect(('127.0.0.1', 4000))
         socks.append(s)
@@ -11,7 +11,8 @@ def main():
     for s in socks:
         s.sendall('hello\n')
 
-    for _ in xrange(999):
+    for i in xrange(50):
+        print i
         for s in socks:
             s.recv(1024)
             s.sendall('hello\n')
