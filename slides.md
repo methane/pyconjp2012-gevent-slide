@@ -698,22 +698,22 @@ $$$$
 
 #参考
 
-* [チュートリアル](http://sdiehl.github.com/gevent-tutorial)
+[チュートリアル](http://sdiehl.github.com/gevent-tutorial)
 
-    http://sdiehl.github.com/gevent-tutorial
-    
-* [日本語訳](http://methane.github.com/gevent-tutorial-ja)
+http://sdiehl.github.com/gevent-tutorial
 
-    http://methane.github.com/gevent-tutorial-ja
-    
-* 公式サイト
- 
-    http://gevent.org/
+[日本語訳](http://methane.github.com/gevent-tutorial-ja)
+
+http://methane.github.com/gevent-tutorial-ja
+
+[Github](https://github.com/SiteSupport/gevent)
+
+https://github.com/SiteSupport/gevent
+
+[公式サイト](http://gevent.org/)
+
+http://gevent.org/
   
-* プロジェクト
-
-    http://code.google.com/p/gevent/
-
 ---
 
 #Thanks.
