@@ -7,6 +7,16 @@ http://methane.github.com/pyconjp2012-gevent-slide
 
 サンプルコードもあります。
 
+html を生成する
+---------------
+
+    $ ./render.py
+
+ローカルでそのままサーバー動かす
+---------------------------------
+
+    $ ./serve.py
+
 
 html5-slides-markdown
 =====================
