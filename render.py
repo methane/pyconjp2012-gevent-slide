@@ -9,8 +9,8 @@ from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 
 
-def render():
-    md_src = io.open('slides.md', encoding='utf8').read()
+def render(fn='slides.md'):
+    md_src = io.open(fn, encoding='utf8').read()
     slides_src = markdown.markdown(md_src).split('<hr />\n')
 
     title = slides_src.pop(0)
@@ -51,8 +51,15 @@ def render():
 
 
 def main():
-    with io.open('index.html', 'w', encoding='utf8') as outfile:
-        outfile.write(render())
+    import sys
+    if len(sys.argv) > 1:
+        in_file = sys.argv[1]
+    else:
+        in_file = 'slides.md'
+    out_file = in_file.rsplit('.', 1)[0] + '.html'
+
+    with io.open(out_file, 'w', encoding='utf8') as outfile:
+        outfile.write(render(in_file))
 
 if __name__ == '__main__':
     main()
