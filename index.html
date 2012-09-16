@@ -1283,8 +1283,11 @@ hub<span style="color: #666666">.</span>switch()
 </ul>
 <h2>PyPy</h2>
 <ul>
-<li>greenlet は CPython 専用。 PyPy に stackless が導入されたのでそれを元に再実装が必要.</li>
-<li>Cython + PyPy の環境は整備されてきているが、性能が出るのはまだまだ先.</li>
+<li>greenlet は PyPy の continuelet に置き換えればいい。</li>
+<li>
+<p><code>gevent.core</code> の PyPy 向け実装が今朝投稿された。</p>
+<p>PyPy 最新開発版の FFI を使っているので 1.9 じゃ動かない</p>
+</li>
 </ul>
 </section>
                 

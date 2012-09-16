@@ -691,8 +691,11 @@ $$$$
 * 必要性は認識されているが、現在は 1.0 の完成に注力されている.
 
 ## PyPy
-* greenlet は CPython 専用。 PyPy に stackless が導入されたのでそれを元に再実装が必要.
-* Cython + PyPy の環境は整備されてきているが、性能が出るのはまだまだ先.
+* greenlet は PyPy の continuelet に置き換えればいい。
+* `gevent.core` の PyPy 向け実装が今朝投稿された。
+
+    PyPy 最新開発版の FFI を使っているので 1.9 じゃ動かない
+    
 
 ---
 
