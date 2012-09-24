@@ -487,7 +487,7 @@ So Motor (gevent like system) is developed.
 
 #Gevent vs Tornado
 
-Torando, Twisted, node.js is good for event driven programming framework.
+Torando, Twisted, node.js is good event driven programming framework.
 
 <br/>
 Gevent allows **standard programming style<br>and using existing libraries.**
