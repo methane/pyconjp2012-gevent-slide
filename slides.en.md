@@ -591,7 +591,8 @@ $$$$
     !python
     import gevent.core, greenlet, time
     
-    # simplified hub. (Use hub = gevent.get_hub() normally)
+    # simplified hub.
+    # Use hub = gevent.get_hub() normally.
     loop = gevent.core.loop()
     hub = greenlet.greenlet(loop.run)
 

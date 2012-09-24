@@ -1119,7 +1119,8 @@ loop<span style="color: #666666">.</span>run()
                   <div class="left">
 <pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.core</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">greenlet</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">time</span>
 
-<span style="color: #408080; font-style: italic"># simplified hub. (Use hub = gevent.get_hub() normally)</span>
+<span style="color: #408080; font-style: italic"># simplified hub.</span>
+<span style="color: #408080; font-style: italic"># Use hub = gevent.get_hub() normally.</span>
 loop <span style="color: #666666">=</span> gevent<span style="color: #666666">.</span>core<span style="color: #666666">.</span>loop()
 hub <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(loop<span style="color: #666666">.</span>run)
 
