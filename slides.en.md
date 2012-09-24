@@ -160,7 +160,7 @@ returns error without blocking when can't process IO immediate.
 
 #nonblocking with Tornado
 
-It makes easy event driven programming.
+It makes event driven programming easy
 
     !python
     from tornado import ioloop, iostream
@@ -390,9 +390,7 @@ Threading have significant overhead.
 
 ---
 
-#複数の処理を繋げる
-
-Connecting multiple bloking functions.
+#Connecting multiple bloking functions.
 
 $$$$
 
