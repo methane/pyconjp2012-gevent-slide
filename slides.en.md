@@ -392,6 +392,8 @@ Threading have significant overhead.
 
 #Connecting multiple bloking functions.
 
+Event driven programming splits code too small.
+
 $$$$
 
 ##Gevent
