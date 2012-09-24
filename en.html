@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2010 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Original slides: Marcin Wichary (mwichary@google.com)
+  Modifications: Ernest Delgado (ernestd@google.com)
+                 Alex Russell (slightlyoff@chromium.org)
+
+  html5-slides-markdown Modifications: Adam Zapletal (adamzap@gmail.com)
+-->
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Gevent</title>
+    <style type = "text/css">
+        body {
+          background: #778;
+          padding: 0;
+          margin: 0;
+          overflow: hidden;
+        }
+
+        div.presentation {
+          position: absolute;
+          width: 100%;
+          display: table-cell;
+          vertical-align: middle;
+          height: 100%;
+          background: inherit;
+        }
+
+        div.slides {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          left: 0;
+          top: 0;
+          position: absolute;
+          display: block;
+          -webkit-transition: -webkit-transform 1s ease-in-out;
+          -moz-transition: -moz-transform 1s ease-in-out;
+          -o-transition: -o-transform 1s ease-in-out;
+        }
+
+        p {
+            margin-top: 0.3em;
+        }
+        strong {
+            color: red;
+        }
+
+        div.slide {
+          display: none;
+          position: absolute;
+          overflow: hidden;
+          width: 900px;
+          height: 700px;
+          left: 50%;
+          top: 50%;
+          margin-top: -350px;
+          background: -webkit-gradient(linear, left bottom, left top, from(#bbd), to(#fff));
+          -webkit-transition: margin 0.25s ease-in-out;
+          background-color: #eee;
+          background: -moz-linear-gradient(bottom, #bbd, #fff);
+          -moz-transition: margin 0.25s ease-in-out;
+          -o-transition: margin 0.25s ease-in-out;
+          border-top-left-radius: 20px;
+          -moz-border-radius-topleft: 20px;
+          -webkit-border-top-left-radius: 20px;
+          border-top-right-radius: 20px;
+          -moz-border-radius-topright: 20px;
+          -webkit-border-top-right-radius: 20px;
+          border-bottom-right-radius: 20px;
+          -moz-border-radius-bottomright: 20px;
+          -webkit-border-bottom-right-radius: 20px;
+          border-bottom-left-radius: 20px;
+          -moz-border-radius-bottomleft: 20px;
+          -webkit-border-bottom-left-radius: 20px;
+        }
+
+        div.left, div.right {
+            position: absolute;
+            width: 45%;
+        }
+        div.top { padding-bottom: 20px; }
+        div.left { left: 20px; }
+        div.right { right: 20px; }
+
+        div.slide p {
+          margin-top: 10px;
+          margin-bottom: 5px;
+          font-size: 32px;
+        }
+
+        div.slide table {
+          text-align: right;
+          font-size: 36px;
+          padding: 30px;
+          padding-left: 100px;
+        }
+        td, th {
+          padding: 10px;
+        }
+        th {
+          padding-left: 50px;
+        }
+
+        .slide.far-past {
+          display: block;
+          margin-left: -2400px;
+        }
+
+        .slide.past {
+          display: block;
+          margin-left: -1400px;
+        }
+
+        .slide.current {
+          display: block;
+          margin-left: -450px;
+        }
+
+        .slide.future {
+          display: block;
+          margin-left: 500px;
+        }
+
+        .slide.far-future {
+          display: block;
+          margin-left: 1500px;
+        }
+
+        body.three-d div.slides {
+          -webkit-transform: translateX(50px) scale(0.8) rotateY(10deg);
+          -moz-transform: translateX(50px) scale(0.8) rotateY(10deg);
+          -o-transform: translateX(50px) scale(0.8) rotateY(10deg);
+        }
+
+
+        /* Content */
+
+        header:not(:only-child) {
+          font-family: 'Lucida Grande';
+          font-weight: normal;
+          font-size: 60px;
+          letter-spacing: -.05em;
+          color: white;
+          color: black;
+          text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+          position: absolute;
+          left: 30px;
+          top: 25px;
+          margin: 0;
+          padding: 0;
+        }
+
+        h1 {
+          display: inline;
+          font-size: 50px;
+          font-weight: normal;
+        }
+
+        h2 {
+          color: black;
+          font-size: 36px;
+          padding: 0;
+          margin: 30px 0px 0px 0px;
+        }
+
+        h2:first-child {
+          margin-top: 20px;
+        }
+
+        section, .slide header:only-child h1 {
+          font-family: 'Lucida Grande';
+          color: #3f3f3f;
+          text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+          margin-left: 30px;
+          margin-right: 30px;
+          margin-top: 100px;
+          display: block;
+          overflow: hidden;
+        }
+
+        a {
+          color: inherit;
+          display: inline-block;
+          text-decoration: none;
+          line-height: 110%;
+          border-bottom: 2px solid #3f3f3f;
+        }
+
+        pre {
+          font-size: 18px;
+          font-family: Monaco, Courier, monospace;
+          margin: 15px 0px 0px 10px;
+        }
+
+        ul {
+            margin: 5px;
+            margin-top: 10px;
+        }
+        li {
+          padding: 10px 0;
+          font-size: 32px;
+        }
+
+        section.title, .slide header:only-child h1 {
+          line-height: 180%;
+          text-align: center;
+          display: table-cell;
+          vertical-align: middle;
+          height: 700px;
+          width: 900px;
+        }
+
+        section.title p:only-child {
+          font-size: 120px;
+          margin-top:100px;
+          margin-bottom:100px;
+        }
+        .slide header:only-child h1 {
+          font-size: 64px;
+          margin-top:100px;
+          margin-bottom:100px;
+        }
+    </style>
+    <script>
+        function main() {
+          // Since we don't have the fallback of attachEvent and
+          // other IE only stuff we won't try to run JS for IE.
+          // It will run though when using Google Chrome Frame
+          if (document.all) { return; }
+
+          var currentSlideNo;
+          var notesOn = false;
+          var slides = document.getElementsByClassName('slide');
+          var touchStartX = 0;
+
+          // var slide_hash = window.location.hash.replace(/#/, '');
+          // if (slide_hash) {
+          //   for (var i = 0, len = slides.length; i < len; i++) {
+          //     if (slides[i].id == slide_hash) {
+          //       currentSlideNo = i;
+          //       updateSlideClasses();
+          //     }
+          //   }
+          // }
+
+          var spaces = /\s+/, a1 = [""];
+
+          var str2array = function(s) {
+            if (typeof s == "string" || s instanceof String) {
+              if (s.indexOf(" ") < 0) {
+                a1[0] = s;
+                return a1;
+              } else {
+                return s.split(spaces);
+              }
+            }
+            return s;
+          };
+
+          var trim = function(str) {
+            return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+          };
+
+          var addClass = function(node, classStr) {
+            classStr = str2array(classStr);
+            var cls = " " + node.className + " ";
+            for (var i = 0, len = classStr.length, c; i < len; ++i) {
+              c = classStr[i];
+              if (c && cls.indexOf(" " + c + " ") < 0) {
+                cls += c + " ";
+              }
+            }
+            node.className = trim(cls);
+          };
+
+          var removeClass = function(node, classStr) {
+            var cls;
+            if (classStr !== undefined) {
+              classStr = str2array(classStr);
+              cls = " " + node.className + " ";
+              for (var i = 0, len = classStr.length; i < len; ++i) {
+                cls = cls.replace(" " + classStr[i] + " ", " ");
+              }
+              cls = trim(cls);
+            } else {
+              cls = "";
+            }
+            if (node.className != cls) {
+              node.className = cls;
+            }
+          };
+
+          var getSlideEl = function(slideNo) {
+            if (slideNo > 0) {
+              return slides[slideNo - 1];
+            } else {
+              return null;
+            }
+          };
+
+          var getSlideTitle = function(slideNo) {
+            var el = getSlideEl(slideNo);
+
+            if (el) {
+              return el.getElementsByTagName('header')[0].innerHTML;
+            } else {
+              return null;
+            }
+          };
+
+          var changeSlideElClass = function(slideNo, className) {
+            var el = getSlideEl(slideNo);
+
+            if (el) {
+              removeClass(el, 'far-past past current future far-future');
+              addClass(el, className);
+            }
+          };
+
+          var updateSlideClasses = function() {
+            window.location.hash = "slide" + currentSlideNo;
+            changeSlideElClass(currentSlideNo - 2, 'far-past');
+            changeSlideElClass(currentSlideNo - 1, 'past');
+            changeSlideElClass(currentSlideNo, 'current');
+            changeSlideElClass(currentSlideNo + 1, 'future');
+            changeSlideElClass(currentSlideNo + 2, 'far-future');
+          };
+
+          var nextSlide = function() {
+            if (currentSlideNo < slides.length) {
+              currentSlideNo++;
+            }
+
+            updateSlideClasses();
+          };
+
+          var prevSlide = function() {
+            if (currentSlideNo > 1) {
+              currentSlideNo--;
+            }
+            updateSlideClasses();
+          };
+
+          var showNotes = function() {
+            var notes = document.querySelectorAll('.notes');
+            for (var i = 0, len = notes.length; i < len; i++) {
+              notes[i].style.display = (notesOn) ? 'none':'block';
+            }
+            notesOn = (notesOn) ? false:true;
+          };
+
+          var switch3D = function() {
+            if (document.body.className.indexOf('three-d') == -1) {
+              document.getElementsByClassName('presentation')[0].style.webkitPerspective = '1000px';
+              document.body.className += ' three-d';
+            } else {
+              window.setTimeout("document.getElementsByClassName('presentation')[0].style.webkitPerspective = '0';", 2000);
+              document.body.className = document.body.className.replace(/three-d/, '');
+            }
+          };
+
+          var handleBodyKeyDown = function(event) {
+            // console.log(event.keyCode);
+            switch (event.keyCode) {
+              case 37: // left arrow
+                prevSlide();
+                break;
+              case 39: // right arrow
+              // case 32: // space
+                nextSlide();
+                break;
+              case 50: // 2
+                showNotes();
+                break;
+              case 51: // 3
+                switch3D();
+                break;
+            }
+          };
+
+          var addTouchListeners = function() {
+            document.addEventListener('touchstart', function(e) {
+              touchStartX = e.touches[0].pageX;
+            }, false);
+            document.addEventListener('touchend', function(e) {
+              var pixelsMoved = touchStartX - e.changedTouches[0].pageX;
+              var SWIPE_SIZE = 150;
+              if (pixelsMoved > SWIPE_SIZE) {
+                nextSlide();
+              }
+              else if (pixelsMoved < -SWIPE_SIZE) {
+               prevSlide();
+              }
+            }, false);
+          };
+
+          // initialize
+
+          (function() {
+            if (window.location.hash != "") {
+              currentSlideNo = Number(window.location.hash.replace('#slide', ''));
+            } else {
+              currentSlideNo = 1;
+            }
+
+            document.addEventListener('keydown', handleBodyKeyDown, false);
+
+            var els = slides;
+            for (var i = 0, el; el = els[i]; i++) {
+              addClass(el, 'slide far-future');
+            }
+            updateSlideClasses();
+
+            // add support for finger events (filter it by property detection?)
+            addTouchListeners();
+          })();
+        };
+    </script>
+</head>
+<body>
+    <div class="presentation">
+      <div class="slides">
+        <div class="slide">
+            <section class="title"><p>Gevent</p>
+</section>
+        </div>
+        
+          <div class="slide">
+              <header><h1>Who am I</h1></header>
+              
+                
+                  <section><p><img src='./icon.jpg' style="right: 30px; top: 30px; position: absolute; width:240px; height:240px;
+ border-radius:30px; "></p>
+<p>稲田 直哉 (INADA Naoki)</p>
+<ul>
+<li>KLab Inc.</li>
+<li>@methane</li>
+<li>msgpack-python</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>This presentation</h1></header>
+              
+                
+                  <section><ul>
+<li>
+<p>source</p>
+<p><small>http://github.com/methane/pyconjp2012-gevent-slide/</small></p>
+</li>
+<li>
+<p>slide</p>
+<p><small>http://methane.github.com/pyconjp2012-gevent-slide/en.html</small></p>
+</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Summary</h1></header>
+              
+                
+                  <section><ul>
+<li><big>Target of Gevent</big></li>
+<li><big>What makes Gevent unique</big></li>
+<li><big>How Gevent works</big></li>
+<li><big>Start using Gevent</big></li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Target of Gevent</h1></header>
+              
+                
+                  <section><p><br /></p>
+<p><big>Easy and efficient <strong>IO multiplexing</strong></big></p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>IO multiplexing</h1></header>
+              
+                
+                  <section><p>Working on conccurrnt IO.</p>
+<ul>
+<li>Web Application</li>
+<li>Chatting system</li>
+<li>tailing multi files.</li>
+<li>downloading many <strike>porn</strike> images from web.</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>How to multiplex IO</h1></header>
+              
+                
+                  <section><h2>blocking IO</h2>
+<p>blocks entire thread when can't process IO immediate.</p>
+<p>Make threads to multiplex blocking IO.</p>
+<h2>nonblocking IO</h2>
+<p>returns error without blocking when can't process IO immediate.</p>
+<ol>
+<li>Wait multiple IOs with single blocking call. (<em>select</em>, <em>epoll</em>, <em>kqeuue</em>, ...)</li>
+<li>Process returned IO with <em>event driven programming</em>.</li>
+</ol>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Make echo server</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>blocking (no IO multiplexing)</h1></header>
+              
+                
+                  <section><p><strong>Only works with single client</strong></p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>) <span style="color: #408080; font-style: italic"># blocks until recieve data.</span>
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                <span style="color: #008000; font-weight: bold">break</span>
+            sock<span style="color: #666666">.</span>sendall(data) <span style="color: #408080; font-style: italic"># block until send buffer is not full.</span>
+    <span style="color: #008000; font-weight: bold">finally</span>:
+        sock<span style="color: #666666">.</span>close()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+    sock<span style="color: #666666">.</span>bind(addr); sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+    <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+        conn, _ <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept() <span style="color: #408080; font-style: italic"># block untile client comes.</span>
+        echo(conn) <span style="color: #408080; font-style: italic"># doesn&#39;t return until client disconnect.</span>
+
+serve((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>blocking with threading</h1></header>
+              
+                
+                  <section><p><strong>Wrap with thread. Very easy.</strong></p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">threading</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>)
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                <span style="color: #008000; font-weight: bold">break</span>
+            sock<span style="color: #666666">.</span>sendall(data)
+    <span style="color: #008000; font-weight: bold">finally</span>:
+        sock<span style="color: #666666">.</span>close()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+    sock<span style="color: #666666">.</span>bind(addr); sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+    <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+        conn, _ <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
+        threading<span style="color: #666666">.</span>Thread(target<span style="color: #666666">=</span>echo, args<span style="color: #666666">=</span>(conn,))<span style="color: #666666">.</span>start()
+
+serve((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>nonblocking with select</h1></header>
+              
+                
+                  <section><p><strong>Using select manually is very hard</strong></p>
+<p><a href="./echo_select.py"><small>echo_select.py</small></a></p>
+<pre><div class="highlight"><pre style="line-height: 125%">    <span style="color: #408080; font-style: italic">#...</span>
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_readable</span>(<span style="color: #008000">self</span>):
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            conn, _ <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>accept()
+            EchoHandler(conn)
+    <span style="color: #408080; font-style: italic">#...</span>
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_readable</span>(<span style="color: #008000">self</span>):
+        <span style="color: #008000; font-weight: bold">try</span>:
+            data <span style="color: #666666">=</span> <span style="color: #008000">self</span><span style="color: #666666">.</span>sock<span style="color: #666666">.</span>recv(<span style="color: #666666">4096</span>)
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                <span style="color: #008000">self</span><span style="color: #666666">.</span>close()
+                <span style="color: #008000; font-weight: bold">return</span>
+            <span style="color: #008000">self</span><span style="color: #666666">.</span>buf<span style="color: #666666">.</span>append(data)
+        <span style="color: #008000; font-weight: bold">finally</span>:
+            <span style="color: #008000">self</span><span style="color: #666666">.</span>_update()
+    <span style="color: #408080; font-style: italic">#...</span>
+</pre></div>
+</pre>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>nonblocking with Tornado</h1></header>
+              
+                
+                  <section><p>It makes easy event driven programming.</p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> ioloop, iostream
+<span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado.netutil</span> <span style="color: #008000; font-weight: bold">import</span> TCPServer
+
+<span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">EchoServer</span>(TCPServer):
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handle_stream</span>(<span style="color: #008000">self</span>, stream, addr):
+        stream<span style="color: #666666">.</span>read_until_close(
+                <span style="color: #008000; font-weight: bold">lambda</span> _: stream<span style="color: #666666">.</span>close(), <span style="color: #408080; font-style: italic"># when closed connection.</span>
+                stream<span style="color: #666666">.</span>write, <span style="color: #408080; font-style: italic"># when recieved data.</span>
+                )
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    server <span style="color: #666666">=</span> EchoServer()
+    server<span style="color: #666666">.</span>listen(addr[<span style="color: #666666">1</span>], addr[<span style="color: #666666">0</span>])
+    ioloop<span style="color: #666666">.</span>IOLoop<span style="color: #666666">.</span>instance()<span style="color: #666666">.</span>start()
+
+serve((<span style="color: #BA2121">&#39;&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>What makes Gevent unique</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>What makes Gevent unique</h1></header>
+              
+                
+                  <section><ul>
+<li>
+<p>echo server with Gevent</p>
+</li>
+<li>
+<p>Gevent vs Threading</p>
+<ul>
+<li>Performance</li>
+</ul>
+</li>
+<li>
+<p>Gevent vs Tornado</p>
+<ul>
+<li>Programming.</li>
+</ul>
+</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>echo server with gevent</h1></header>
+              
+                
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">gevent.server</span> <span style="color: #008000; font-weight: bold">import</span> StreamServer
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">handler</span>(sock, addr):
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #666666">1</span>:
+            buf <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">4096</span>)
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> buf:
+                <span style="color: #008000; font-weight: bold">return</span>
+            sock<span style="color: #666666">.</span>sendall(buf)
+    <span style="color: #008000; font-weight: bold">finally</span>:
+        sock<span style="color: #666666">.</span>close()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    server <span style="color: #666666">=</span> StreamServer(addr, handler, backlog<span style="color: #666666">=1024</span>)
+    server<span style="color: #666666">.</span>serve_forever()
+
+serve((<span style="color: #BA2121">&#39;&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1><strong>It looks like bloking.<br>But it does IO multiplex in single thread.</strong></h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>gevent.monkey.patch_all()</h1></header>
+              
+                
+                  <section><pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.monkey</span>; gevent<span style="color: #666666">.</span>monkey<span style="color: #666666">.</span>patch_all()
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">socket</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">threading</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">echo</span>(sock):
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+            data <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>recv(<span style="color: #666666">1024</span>)
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #AA22FF; font-weight: bold">not</span> data:
+                <span style="color: #008000; font-weight: bold">break</span>
+            sock<span style="color: #666666">.</span>sendall(data)
+    <span style="color: #008000; font-weight: bold">finally</span>:
+        sock<span style="color: #666666">.</span>close()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">serve</span>(addr):
+    sock <span style="color: #666666">=</span> socket<span style="color: #666666">.</span>socket()
+    sock<span style="color: #666666">.</span>bind(addr); sock<span style="color: #666666">.</span>listen(<span style="color: #666666">50</span>)
+    <span style="color: #008000; font-weight: bold">while</span> <span style="color: #008000">True</span>:
+        conn, _ <span style="color: #666666">=</span> sock<span style="color: #666666">.</span>accept()
+        threading<span style="color: #666666">.</span>Thread(target<span style="color: #666666">=</span>echo, args<span style="color: #666666">=</span>(conn,))<span style="color: #666666">.</span>start()
+
+serve((<span style="color: #BA2121">&#39;0.0.0.0&#39;</span>, <span style="color: #666666">4000</span>))
+</pre></div>
+</pre>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1><strong>Magic 1line makes<br>threaded code to single thread.</strong></h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent vs Threading<br/><small>Performance</small></h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Benchmark</h1></header>
+              
+                
+                  <section><p>1000 clients sends 1000 messages to echo server.</p>
+<p>(Total 1M messages)</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Memory (RSS)</h1></header>
+              
+                
+                  <section><p><br /></p>
+<p>threading:
+34MB</p>
+<p>gevent:
+26MB</p>
+<p>tornado:
+12MB</p>
+<p>select:
+6.1MB</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Memory (VSS)</h1></header>
+              
+                
+                  <section><p><br /></p>
+<p>threading: <strong>3.9GB</strong></p>
+<p>gevent: 41MB</p>
+<p>tornado: 27MB</p>
+<p>select: 21MB</p>
+<p><br />
+Threaded code doesn't run in 32bit environment.</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Time</h1></header>
+              
+                
+                  <section><p><br />
+threading:
+43sec</p>
+<p>gevent:
+53sec</p>
+<p>tornado:
+43sec</p>
+<p>select:
+25sec</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1><strong>Hmm, Threading looks enough.<br>Why using Gevent?</strong></h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Benchmark 2</h1></header>
+              
+                
+                  <section><p>2000 clients send 50 messages. (Total: 0.1M)</p>
+<p>Add busy loop before send.</p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">stress</span>(): <span style="color: #408080; font-style: italic"># 18.6 ms</span>
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">rec</span>(n):
+        <span style="color: #008000; font-weight: bold">if</span> n:
+            <span style="color: #008000; font-weight: bold">return</span> rec(n<span style="color: #666666">-1</span>)
+    <span style="color: #008000; font-weight: bold">for</span> i <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">xrange</span>(<span style="color: #666666">100</span>):
+        rec(<span style="color: #666666">100</span>)
+</pre></div>
+</pre>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Result</h1></header>
+              
+                
+                  <section><table>
+<tr>
+<td></td>
+<th>Gevent</th>
+<th>Threading</th>
+</tr>
+<tr>
+<td>RSS</td>
+<td>46.1MB</td>
+<td>210.5MB</td>
+</tr>
+<tr>
+<td>VSS</td>
+<td>46.5MB</td>
+<td>7.9GB</td>
+</tr>
+<tr>
+<td>time</td>
+<td>3m20sec</td>
+<td>10m55sec</td>
+</tr>
+</table>
+
+<p>Threading have significant overhead.</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent vs Threading</h1></header>
+              
+                
+                  <section><ul>
+<li>
+<p>Threading is enough on many circumstance</p>
+<p>It's ok to use Gevent for fun :-)</p>
+</li>
+<li>
+<p>multicore, multithread, heavy load</p>
+<p>When threading overhead is problem,
+Gevent helps us.</p>
+</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent vs Tornado<br/><small>Programming</small></h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>複数の処理を繋げる</h1></header>
+              
+                
+                  <section>
+                  <div class="top"><p>Connecting multiple bloking functions.</p>
+</div>
+                  <div class="left">
+<h2>Gevent</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>(a):
+    b <span style="color: #666666">=</span> spam()
+    <span style="color: #008000; font-weight: bold">return</span> egg(a, b)
+</pre></div>
+</pre>
+<h2>Tornado</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">SpameHamEgg</span>(<span style="color: #008000">object</span>):
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">bake</span>(<span style="color: #008000">self</span>, a, callback):
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>a <span style="color: #666666">=</span> a
+        <span style="color: #008000">self</span><span style="color: #666666">.</span>callback <span style="color: #666666">=</span> callback
+        spam(callback<span style="color: #666666">=</span><span style="color: #008000">self</span><span style="color: #666666">.</span>on_spam)
+
+    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_spam</span>(<span style="color: #008000">self</span>, b):
+        egg(<span style="color: #008000">self</span><span style="color: #666666">.</span>a, b, callback<span style="color: #666666">=</span><span style="color: #008000">self</span><span style="color: #666666">.</span>callback)
+</pre></div>
+</pre>
+</div>
+                  <div class="right">
+<h2>tornado.gen</h2>
+<p><small>limited coroutine implemented by generator</small></p>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> gen
+<span style="color: #AA22FF">@gen.engine</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>(a):
+    b <span style="color: #666666">=</span> yeild spam()
+    <span style="color: #008000; font-weight: bold">return</span> egg(a, b)
+</pre></div>
+</pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Error handling</h1></header>
+              
+                
+                  <section>
+                  <div class="top"><p>Callback is called from outside of try-catche block.<br>
+Event driven programming requires another error handling style.</p>
+</div>
+                  <div class="left">
+<h2>Gevent</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>():
+    <span style="color: #008000; font-weight: bold">try</span>:
+        a <span style="color: #666666">=</span> spam()
+        <span style="color: #008000; font-weight: bold">return</span> egg(a)
+    <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">Exception</span> <span style="color: #008000; font-weight: bold">as</span> e:
+        log<span style="color: #666666">.</span>error(e)
+        <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000">None</span>
+</pre></div>
+</pre>
+</div>
+                  <div class="right">
+<h2>Tornado</h2>
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">contextlib</span>
+
+<span style="color: #AA22FF">@contextlib.contextmanager</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">log_error</span>():
+    <span style="color: #008000; font-weight: bold">try</span>:
+        <span style="color: #008000; font-weight: bold">yield</span>
+    <span style="color: #008000; font-weight: bold">except</span> <span style="color: #D2413A; font-weight: bold">Exception</span> <span style="color: #008000; font-weight: bold">as</span> e:
+        log<span style="color: #666666">.</span>error(e)
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>():
+    <span style="color: #008000; font-weight: bold">with</span> StackContext(log_error):
+        spam(callback<span style="color: #666666">=</span>egg)
+</pre></div>
+</pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>libraries</h1></header>
+              
+                
+                  <section><h2>Gevent</h2>
+<p>Many libraries works on Gevent with monkey patching.</p>
+<p>It's easy to support gevent.</p>
+<h2>Tornado</h2>
+<p>Requires full scratch.</p>
+<h2>Example: PyMongo</h2>
+<p>Works on Gevent with monkey patch.</p>
+<p>It doesn't return to Tornado IO loops.
+So Motor (gevent like system) is developed.</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Gevent vs Tornado</h1></header>
+              
+                
+                  <section><p>Torando, Twisted, node.js is good for event driven programming framework.</p>
+<p><br/>
+Gevent allows <strong>standard programming style<br>and using existing libraries.</strong></p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>How Gevent works.</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>How Gevent works.</h1></header>
+              
+                
+                  <section><ol>
+<li>Greenlet</li>
+<li>gevent.core</li>
+<li>gevent.hub</li>
+</ol>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Greenlet</h1></header>
+              
+                
+                  <section>
+                  <div class="top"><p>lightweight thread requires explicit switch. (coroutine)</p>
+</div>
+                  <div class="left">
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">greenlet</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">f1</span>():
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">1</span>
+    g2<span style="color: #666666">.</span>switch()
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">3</span>
+    g2<span style="color: #666666">.</span>switch()
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f1&#39;</span>, <span style="color: #666666">5</span>
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">f2</span>():
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f2&#39;</span>, <span style="color: #666666">2</span>
+    g1<span style="color: #666666">.</span>switch()
+    <span style="color: #008000; font-weight: bold">print</span> <span style="color: #BA2121">&#39;f2&#39;</span>, <span style="color: #666666">4</span>
+    g1<span style="color: #666666">.</span>switch()
+
+g1 <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(f1)
+g2 <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(f2)
+g1<span style="color: #666666">.</span>switch()
+</pre></div>
+</pre>
+</div>
+                  <div class="right">
+<p>Result</p>
+<pre><code>f1 1
+f2 2
+f1 3
+f2 4
+f1 5
+</code></pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Greenlet vs Thread</h1></header>
+              
+                
+                  <section><ul>
+<li>low memory consuption.</li>
+<li>smaller overhead when switching. (especially, with Old GIL)</li>
+<li>
+<p>cooperative (easy to write threadsafe code)</p>
+</li>
+<li>
+<p><strong>doesn't run blocking system call concurrently</strong></p>
+</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>gevent.core</h1></header>
+              
+                
+                  <section>
+                  <div class="top"><p>Wrapping libev event loop</p>
+</div>
+                  <div class="left">
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.core</span>
+<span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">time</span>
+
+loop <span style="color: #666666">=</span> gevent<span style="color: #666666">.</span>core<span style="color: #666666">.</span>loop()
+
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">callback</span>():
+    <span style="color: #008000; font-weight: bold">print</span> time<span style="color: #666666">.</span>time()
+
+<span style="color: #408080; font-style: italic"># repeated timer event.</span>
+timer <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>timer(<span style="color: #666666">1.0</span>, <span style="color: #666666">1.0</span>)
+timer<span style="color: #666666">.</span>start(callback)
+loop<span style="color: #666666">.</span>run()
+</pre></div>
+</pre>
+</div>
+                  <div class="right">
+<p>Result:</p>
+<pre><code>1347446334.99
+1347446335.99
+1347446336.99
+1347446337.99
+...
+</code></pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>gevent.hub</h1></header>
+              
+                
+                  <section>
+                  <div class="top"><p>The Greenlet connects eventloop and greenlet.</p>
+</div>
+                  <div class="left">
+<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">import</span> <span style="color: #0000FF; font-weight: bold">gevent.core</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">greenlet</span><span style="color: #666666">,</span> <span style="color: #0000FF; font-weight: bold">time</span>
+
+<span style="color: #408080; font-style: italic"># simplified hub. (Use hub = gevent.get_hub() normally)</span>
+loop <span style="color: #666666">=</span> gevent<span style="color: #666666">.</span>core<span style="color: #666666">.</span>loop()
+hub <span style="color: #666666">=</span> greenlet<span style="color: #666666">.</span>greenlet(loop<span style="color: #666666">.</span>run)
+
+<span style="color: #408080; font-style: italic"># simplified gevent.sleep()</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">sleep</span>(seconds):
+    timer <span style="color: #666666">=</span> loop<span style="color: #666666">.</span>timer(seconds)
+    <span style="color: #408080; font-style: italic"># Switch to current greenlet on callback.</span>
+    timer<span style="color: #666666">.</span>start(greenlet<span style="color: #666666">.</span>getcurrent()<span style="color: #666666">.</span>switch)
+    <span style="color: #408080; font-style: italic"># Switch to hub and run event loop.</span>
+    hub<span style="color: #666666">.</span>switch()
+
+<span style="color: #408080; font-style: italic"># function looks like blocking code.</span>
+<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">sleeper</span>():
+    <span style="color: #008000; font-weight: bold">for</span> _ <span style="color: #AA22FF; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666666">4</span>):
+        <span style="color: #008000; font-weight: bold">print</span> time<span style="color: #666666">.</span>time()
+        sleep(<span style="color: #666666">1</span>)
+
+sleeper()
+</pre></div>
+</pre>
+</div>
+                  <div class="right">
+<p>Result:</p>
+<pre><code>1347448193.7
+1347448194.7
+1347448195.71
+1347448196.71
+</code></pre>
+</div>
+                  </section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>gevent.*</h1></header>
+              
+                
+                  <section><ul>
+<li>gevent.thread -- gevent version of standard thread</li>
+<li>gevent.socket -- standard socket</li>
+<li>gevent.select -- standard select</li>
+<li>gevent.queue -- standard Queue</li>
+<li>gevent.lock -- locks in threading</li>
+<li>gevent.pywsgi -- wsgi server</li>
+<li>gevent.monkey -- monkey patch</li>
+<li>etc...</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>What is gevent</h1></header>
+              
+                
+                  <section><ul>
+<li>event loop (core)</li>
+<li>connector for event loop and greenlet (hub)</li>
+<li>modules highly compatible to standard library.</li>
+<li>monkey patch replacing standard libraries with gevent version.</li>
+<li>tcpserver, wsgiserver, name resolution, etc...</li>
+<li>pool, Event, AsyncResult, etc...</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Start using Gevent</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Chance to starting</h1></header>
+              
+                
+                  <section><ul>
+<li>supporting WebSocket</li>
+<li>supporting Comet (long polling)</li>
+<li>supporting Streaming API</li>
+<li>anytime needs massive concurrent connection.</li>
+<li>When threading is not efficient.</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Where can't use Gevent now.</h1></header>
+              
+                
+                  <section><ul>
+<li>Python 3</li>
+<li>PyPy</li>
+</ul>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Where to go now.</h1></header>
+              
+                
+                  <section><p><a href="http://sdiehl.github.com/gevent-tutorial">tutorial</a></p>
+<p>http://sdiehl.github.com/gevent-tutorial</p>
+<p><a href="http://methane.github.com/gevent-tutorial-ja">in japanese</a></p>
+<p>http://methane.github.com/gevent-tutorial-ja</p>
+<p><a href="https://github.com/SiteSupport/gevent">Github</a></p>
+<p>https://github.com/SiteSupport/gevent</p>
+<p><a href="http://gevent.org/">website</a></p>
+<p>http://gevent.org/</p>
+</section>
+                
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>Thanks.</h1></header>
+              
+          </div>
+        
+          <div class="slide">
+              <header><h1>...</h1></header>
+              
+                
+                  <section><hr /></section>
+                
+              
+          </div>
+        
+      </div>
+    </div>
+    <script>
+        main()
+    </script>
+</body>
+</html>
