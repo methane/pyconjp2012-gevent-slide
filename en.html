@@ -916,45 +916,7 @@ Gevent helps us.</p>
           </div>
         
           <div class="slide">
-              <header><h1>複数の処理を繋げる</h1></header>
-              
-                
-                  <section>
-                  <div class="top"><p>Connecting multiple bloking functions.</p>
-</div>
-                  <div class="left">
-<h2>Gevent</h2>
-<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>(a):
-    b <span style="color: #666666">=</span> spam()
-    <span style="color: #008000; font-weight: bold">return</span> egg(a, b)
-</pre></div>
-</pre>
-<h2>Tornado</h2>
-<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">class</span> <span style="color: #0000FF; font-weight: bold">SpameHamEgg</span>(<span style="color: #008000">object</span>):
-
-    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">bake</span>(<span style="color: #008000">self</span>, a, callback):
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>a <span style="color: #666666">=</span> a
-        <span style="color: #008000">self</span><span style="color: #666666">.</span>callback <span style="color: #666666">=</span> callback
-        spam(callback<span style="color: #666666">=</span><span style="color: #008000">self</span><span style="color: #666666">.</span>on_spam)
-
-    <span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">on_spam</span>(<span style="color: #008000">self</span>, b):
-        egg(<span style="color: #008000">self</span><span style="color: #666666">.</span>a, b, callback<span style="color: #666666">=</span><span style="color: #008000">self</span><span style="color: #666666">.</span>callback)
-</pre></div>
-</pre>
-</div>
-                  <div class="right">
-<h2>tornado.gen</h2>
-<p><small>limited coroutine implemented by generator</small></p>
-<pre><div class="highlight"><pre style="line-height: 125%"><span style="color: #008000; font-weight: bold">from</span> <span style="color: #0000FF; font-weight: bold">tornado</span> <span style="color: #008000; font-weight: bold">import</span> gen
-<span style="color: #AA22FF">@gen.engine</span>
-<span style="color: #008000; font-weight: bold">def</span> <span style="color: #0000FF">spamegg</span>(a):
-    b <span style="color: #666666">=</span> yeild spam()
-    <span style="color: #008000; font-weight: bold">return</span> egg(a, b)
-</pre></div>
-</pre>
-</div>
-                  </section>
-                
+              <header><h1>Connecting multiple bloking functions.</h1></header>
               
           </div>
         
